@@ -1,3 +1,5 @@
+*This is a work in progress*
+
 MQTT_Gateways
 ==================
 A Framework to Build Consistent Gateways to an MQTT Network
