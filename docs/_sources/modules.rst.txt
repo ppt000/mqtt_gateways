@@ -1,0 +1,7 @@
+mqtt_gateways
+=============
+
+.. toctree::
+   :maxdepth: 4
+
+   mqtt_gateways
