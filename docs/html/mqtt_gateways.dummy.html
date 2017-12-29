@@ -1,0 +1,161 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>mqtt_gateways.dummy package &#8212; mqtt_gateways 0.1 documentation</title>
+    <link rel="stylesheet" href="_static/classic.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     '0.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" /> 
+  </head>
+  <body>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">mqtt_gateways 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="mqtt-gateways-dummy-package">
+<h1>mqtt_gateways.dummy package<a class="headerlink" href="#mqtt-gateways-dummy-package" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="module-mqtt_gateways.dummy">
+<span id="module-contents"></span><h2>Module contents<a class="headerlink" href="#module-mqtt_gateways.dummy" title="Permalink to this headline">¶</a></h2>
+<p>A dummy gateway to test the installation setup, the loading of the
+configuration files, and the basic operation of the core application.</p>
+</div>
+<div class="section" id="submodules">
+<h2>Submodules<a class="headerlink" href="#submodules" title="Permalink to this headline">¶</a></h2>
+</div>
+<div class="section" id="module-mqtt_gateways.dummy.dummy2mqtt">
+<span id="mqtt-gateways-dummy-dummy2mqtt-module"></span><h2>mqtt_gateways.dummy.dummy2mqtt module<a class="headerlink" href="#module-mqtt_gateways.dummy.dummy2mqtt" title="Permalink to this headline">¶</a></h2>
+<p>Launcher script for the dummy gateway.</p>
+<p>Use this as a template.
+If the name conventions have been respected, just change all occurences of
+<cite>dummy</cite> into the name of your gateway.</p>
+</div>
+<div class="section" id="module-mqtt_gateways.dummy.dummy_interface">
+<span id="mqtt-gateways-dummy-dummy-interface-module"></span><h2>mqtt_gateways.dummy.dummy_interface module<a class="headerlink" href="#module-mqtt_gateways.dummy.dummy_interface" title="Permalink to this headline">¶</a></h2>
+<p>The <em>dummy</em> interface class definition. Use it as a template.</p>
+<p>This module defines the class <code class="docutils literal"><span class="pre">dummyInterface</span></code> that will be instantiated by the
+main gateway module.
+Any other code needed for the interface can be placed here or in other
+modules, as long as the necessary imports are included of course.</p>
+<dl class="class">
+<dt id="mqtt_gateways.dummy.dummy_interface.dummyInterface">
+<em class="property">class </em><code class="descclassname">mqtt_gateways.dummy.dummy_interface.</code><code class="descname">dummyInterface</code><span class="sig-paren">(</span><em>params</em>, <em>msgin</em>, <em>msgout</em>, <em>path</em><span class="sig-paren">)</span><a class="headerlink" href="#mqtt_gateways.dummy.dummy_interface.dummyInterface" title="Permalink to this definition">¶</a></dt>
+<dd><p>The dummyInterface class doesn’t do anything but provides a template.</p>
+<p>The minimum requirement for the interface class is to define 2 public
+methods:</p>
+<ul class="simple">
+<li>the constructor <code class="docutils literal"><span class="pre">__init__</span></code> which takes 4 arguments,</li>
+<li>the <code class="docutils literal"><span class="pre">loop</span></code> method.</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>params</strong> (<em>dictionary of strings</em>) – This dictionary is initialised by the <code class="docutils literal"><span class="pre">[INTERFACE]</span></code> section in
+the configuration file.  All the options in that section generate an
+entry in the dictionary, with the key being the first part of the
+option, and the value being the second part of the option (after the
+semi-colon <code class="docutils literal"><span class="pre">:</span></code>). Use this to pass parameters from the configuration
+file to the interface, for example the name of a port, or the speed
+of a serial communication.</li>
+<li><strong>msgin, msgout</strong> (lists of <code class="docutils literal"><span class="pre">internalMsg</span></code> objects) – These lists represent the communication <em>bus</em> with the core of the
+application. The list <code class="docutils literal"><span class="pre">msgin</span></code> contains the incoming messages to
+process by this interface, and the list <code class="docutils literal"><span class="pre">msgout</span></code> can be used to
+send messages from this interface to the core application (and
+subsequently to the MQTT network).  The elements of these lists
+should be instantiations of the <code class="docutils literal"><span class="pre">internalMsg</span></code> class.  Use the
+method <code class="docutils literal"><span class="pre">pop(0)</span></code> to read the <code class="docutils literal"><span class="pre">msgin</span></code> list on a FIFO basis and
+the method <code class="docutils literal"><span class="pre">append(msg)</span></code> to fill the <code class="docutils literal"><span class="pre">msgout</span></code> list.
+The constructor should assign these lists to a local attribute
+that the other methods of this class can use when needed.</li>
+<li><strong>path</strong> (<em>the full absolute path of the launcher script</em>) – This path can be used to extract the name of the application
+or the directory where it is located.  It can be useful to
+the <code class="docutils literal"><span class="pre">logging</span></code> library to allow proper hierarchical logging
+or to other functions that need to find data files relative to
+the launcher script location.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="mqtt_gateways.dummy.dummy_interface.dummyInterface.loop">
+<code class="descname">loop</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mqtt_gateways.dummy.dummy_interface.dummyInterface.loop" title="Permalink to this definition">¶</a></dt>
+<dd><p>The method called periodically by the main loop.</p>
+<p>Place here your code to interact with your system.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="py-modindex.html" title="Python Module Index"
+             >modules</a> |</li>
+        <li class="nav-item nav-item-0"><a href="index.html">mqtt_gateways 0.1 documentation</a> &#187;</li> 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2017, Paolo Taddonio.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.6.5.
+    </div>
+  </body>
+</html>
