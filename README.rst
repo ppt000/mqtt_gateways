@@ -1,6 +1,7 @@
 
 *This is a work in progress*
 
+Please the documentation at:
 `<http://mqtt-gateways.readthedocs.io/>`_
 
 MQTT_Gateways

@@ -9,16 +9,16 @@ It also contains the default configuration settings.
 
 This module exposes the main entry points for the framework:
 
-- the gateway interface class, which is received as an argument by the main
-function 'startgateway()', and is instantiated after all the initialisations are
-done. Note that at the moment of instantiation, the configuration file should be
-loaded, so anything that is written inside the 'device' option of the
-'INTERFACE' section will be passed on to the class constructor.  This way,
-custom configuration settings can be passed on to the gateway interface.
-
-- the gateway interface class is expected to have a proper __init__() method
-(constructor) with the appropriate parameters, as well as the loop() method,
-which allows the interface to do whatever it needs to do at regular intervals.
+    The gateway interface class, which is received as an argument by the main
+    function 'startgateway()', and is instantiated after all the initialisations are
+    done. Note that at the moment of instantiation, the configuration file should be
+    loaded, so anything that is written inside the 'device' option of the
+    'INTERFACE' section will be passed on to the class constructor.  This way,
+    custom configuration settings can be passed on to the gateway interface.
+    
+    The gateway interface class is expected to have a proper __init__() method
+    (constructor) with the appropriate parameters, as well as the loop() method,
+    which allows the interface to do whatever it needs to do at regular intervals.
 
 @author: PierPaolo
 '''

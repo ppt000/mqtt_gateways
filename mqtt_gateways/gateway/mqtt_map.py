@@ -14,19 +14,19 @@ change in this module will be reflected in all gateways.
 This abstraction only works if some basic concepts are respected across the
 applications. These are:
 
-- there are 6 parameters that define all types of messages: the function, the
-gateway, the location, the device, the type (command or status) and the action
-(or status); out of these, 4 are related to the destination of the message
-(function, gateway, location, device) and 2 to the content of the message (type
-and action/status). Finally we can add the source parameter to identify the
-sender as it might be useful, making a total of 7 parameters.
+    There are 6 parameters that define all types of messages: the function, the
+    gateway, the location, the device, the type (command or status) and the action
+    (or status); out of these, 4 are related to the destination of the message
+    (function, gateway, location, device) and 2 to the content of the message (type
+    and action/status). Finally we can add the source parameter to identify the
+    sender as it might be useful, making a total of 7 parameters.
 
-- in theory only 3 parameters are absolutely necessary: the type (defines the
-purpose of the message), the location or the device (defines the destination),
-the action or status (defines the content). Those 3 elements constitute a full
-'command' or a full 'reply'. Adding the function and/or the gateway helps a lot
-in filtering the topic, and therefore simplifies the processing of the message
-downstream, but should not be considered compulsory.
+    In theory only 3 parameters are absolutely necessary: the type (defines the
+    purpose of the message), the location or the device (defines the destination),
+    the action or status (defines the content). Those 3 elements constitute a full
+    'command' or a full 'reply'. Adding the function and/or the gateway helps a lot
+    in filtering the topic, and therefore simplifies the processing of the message
+    downstream, but should not be considered compulsory.
 
 We define the MQTT syntax as follows (19Oct2017):
     Topic: root/function/gateway/location/device/source/type-{'C' or 'S'}
@@ -77,21 +77,30 @@ class internalMsg():
         self.device = device
         self.action = action
         self.arguments = arguments
+        
+    def str(self):
+        return ''.join(('cmd=',str(self.iscmd),
+                        ';function=',self.function,
+                        ';gateway=',self.gateway,
+                        ';location=',self.location,
+                        ';device=',self.device,
+                        ';action=',self.action
+                        ))
 
 class msgMap():
     '''
     This class is made of:
     
-    - 1 list of topics to subscribe to,
+    1 list of topics to subscribe to,
     
-    - 2 lists of internal messages, one for incoming ones and one for outgoing
+    2 lists of internal messages, one for incoming ones and one for outgoing
     ones; these lists could be located in different places, but here is as good
     as any other, even if it does not pertain to the mapping process;
     
-    - 5 maps corresponding to the 5 elements of an internal message that have to
+    5 maps corresponding to the 5 elements of an internal message that have to
     be translated in MQTT syntax, and back;
     
-    - 2 methods to translate an internal message into an MQTT message and back.
+    2 methods to translate an internal message into an MQTT message and back.
     '''
 
     def __init__(self, mapdata, fullpath = None):
