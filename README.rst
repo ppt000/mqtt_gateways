@@ -1,8 +1,6 @@
 
 *This is a work in progress*
 
-`<https://ppt000.github.io/mqtt_gateways/>`_
-
 `<http://mqtt-gateways.readthedocs.io/>`_
 
 MQTT_Gateways
