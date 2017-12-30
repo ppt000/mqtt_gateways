@@ -3,6 +3,8 @@
 
 `<https://ppt000.github.io/mqtt_gateways/>`_
 
+`<http://mqtt-gateways.readthedocs.io/>`_
+
 MQTT_Gateways
 ==================
 A Framework to Build Consistent Gateways to an MQTT Network
