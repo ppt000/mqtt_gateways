@@ -10,9 +10,9 @@ Welcome to mqtt_gateways's documentation!
    :maxdepth: 2
    :caption: Contents:
    
-   Home
-   Installation
-   ProjectDescription
+   Home <home>
+   Installation <installation>
+   Project Description <project_description>
 
 
 Indices and tables
