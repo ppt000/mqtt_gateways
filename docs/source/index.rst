@@ -10,6 +10,8 @@ Welcome to mqtt_gateways's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   mqtt_gateways
+   
 
 Indices and tables
 ==================
