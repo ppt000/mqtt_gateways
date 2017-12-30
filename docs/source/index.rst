@@ -9,9 +9,11 @@ Welcome to mqtt_gateways's documentation!
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
-
-   mqtt_gateways
    
+   Home
+   Installation
+   ProjectDescription
+
 
 Indices and tables
 ==================
