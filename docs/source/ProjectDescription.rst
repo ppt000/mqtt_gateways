@@ -1,6 +1,8 @@
 Project Description
 ===================
 
+.. image:: images/DomesticIOT.JPG
+
 Genesis
 *******
 
