@@ -1,7 +1,7 @@
 Project Description
 ===================
 
-.. image:: DomesticIOT.jpg
+.. image:: domestic_iot.png
 
 Genesis
 *******
