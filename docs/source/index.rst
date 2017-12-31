@@ -6,17 +6,20 @@
 Welcome to mqtt_gateways's documentation!
 =========================================
 
+Contents
+********
+
 .. toctree::
-   :maxdepth: 2
-   :caption: Contents:
+   :maxdepth: 1
    
    Home <home>
    Installation <installation>
    Project Description <project_description>
+   Package <mqtt_gateways>
 
 
 Indices and tables
-==================
+******************
 
 * :ref:`genindex`
 * :ref:`modindex`

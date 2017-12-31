@@ -2,35 +2,35 @@ Installation
 ============
 
 Assuming the 'root' directory has been called ``mqtt_gateways`` as advised, then the directory structure of the relevant files should look
-like this:
+like this::
 
-mqtt_gateways (root)
-|
-+- mqtt_gateways
-   |
-   +- gateway
-   |  |
-   |  +- __init__.py
-   |  +- mqtt_map.py
-   |  \- start_gateway.py
-   |
-   +- utils
-   |  |
-   |  +- __init__.py
-   |  +- exception_throttled.py
-   |  +- generate_filepath.py
-   |  +- init_logger.py
-   |  \- load_config.py
-   |
-   +- dummy
-      |
-      +- __init__.py
-      +- dummy_interface.py
-      +- dummy2mqtt.py
-      \- data
-         |
-         +- dummy2mqtt.conf
-         \- dummy2mqtt.map
+	mqtt_gateways (root)
+	|
+	+- mqtt_gateways
+	   |
+	   +- gateway
+	   |  |
+	   |  +- __init__.py
+	   |  +- mqtt_map.py
+	   |  \- start_gateway.py
+	   |
+	   +- utils
+	   |  |
+	   |  +- __init__.py
+	   |  +- exception_throttled.py
+	   |  +- generate_filepath.py
+	   |  +- init_logger.py
+	   |  \- load_config.py
+	   |
+	   +- dummy
+	      |
+	      +- __init__.py
+	      +- dummy_interface.py
+	      +- dummy2mqtt.py
+	      \- data
+	         |
+	         +- dummy2mqtt.conf
+	         \- dummy2mqtt.map
 
 The core engine of the project is the ``gateway`` directory with a main module ``start_gateway.py``
 that initialises everything that needs to and launches the main loop.  The ``mqtt_map.py`` module
@@ -60,7 +60,7 @@ The ``dummy``directory has a sub-directory ``data`` containing 2 files: ``dummy2
 and ``dummy2mqtt.map`` which is the map file needed for the translation of keywords as described above.
 
 Configuration
-=============
+*************
 
 The configuration file has a standard *INI* syntax, with sections identified by ``[SECTION]`` and options within sections identified by ``option=value``.
 The gateway being developped can use the ``[INTERFACE]`` section where any number of options can be inserted.  These will be made available to the application
@@ -74,13 +74,13 @@ usually a raw IP address (192.168.1.55 for example), but anything else that the 
 The default port is 1883, if it is different it can be also indicated in the configuration file.
 
 Launch
-======
+******
 
 The only purpose of launching the ``dummy`` gateway is to make sure that all modules are there, the data files are found, and that
 the application can connect to the MQTT broker.
-The application should be launched from the 'root' directory, here the first ``mqtt_gateways`` directory.  From there, type
+The application should be launched from the 'root' directory, here the first ``mqtt_gateways`` directory.  From there, type::
 
-python -m mqtt_gateways.dummy.dummy2mqtt data/
+	python -m mqtt_gateways.dummy.dummy2mqtt data/
 
 The ``data/`` argument simply indicated where the configuration file is.
 If no errors appear then one can go and check the log file (inside the ``data`` directory) to see if all is going fine.
@@ -90,7 +90,7 @@ show if the connection with the MQTT broker is succesfull or not, any subscripti
 The subscriptions are based on the map file, which is discussed below.
 
 The Map file
-============
+************
 
 The map file provides all the 'implementation dependent' MQTT data.  This is made of all the topics to subscribe to,
 as well as the actual mappings between the MQTT keywords and the ones used in the current specific gateway.
@@ -105,7 +105,7 @@ The map file provided for the ``dummy`` gateway is just there as example and is 
 and the topics that are there should be subscribed to when the application is launched.
 
 Testing
-=======
+*******
 
 The only thing that can be tested with the ``dummy`` gateway is the MQTT connection.  As described above, the log file should
 provide some information regarding connection and subscriptions.

@@ -53,6 +53,7 @@ The content of a message in the context of domestic IoT can be split into:
 
 - a type: *command* for messages that are requiring an action to be performed, or *status* for messages
 that only broadcast to interested parties that some status has changed;
+
 - a characteristic of the device that needs to be changed in case of a *command*, or that needs to broadcast
 its state in case of a *status* (e.g. 'device=on' which can mean 'turn it on' if the type is *command*,
 or can mean 'device is now on' if type is *status*).
