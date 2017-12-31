@@ -6,6 +6,8 @@
 Welcome to mqtt_gateways's documentation!
 =========================================
 
+.. image:: basic_diagram.png
+
 Contents
 ********
 
