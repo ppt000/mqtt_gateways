@@ -90,13 +90,13 @@ class dummyInterface():
             except IndexError: break
             # do something with the message; here we log only
             self._logger.debug('Message <',msg.str(),'> received.')
-        # example code to write in the outgoing messages list every 10 seconds
+        # example code to write in the outgoing messages list periodically
         t = time.time()
-        if (t - self.t0) > 10:
+        if (t - self.t0) > 30: # every 30 seconds
             msg = internalMsg(iscmd=True,
-                              function= 'lighting',
+                              function= 'Lighting',
                               gateway= 'dummy',
-                              location= 'myroom',
+                              location= 'Office',
                               action= 'LIGHT_ON')
             self._msgout.append(msg)
             self.t0 = t

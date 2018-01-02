@@ -6,6 +6,9 @@
 Welcome to MQTT_Gateways's documentation!
 =========================================
 
+**This is a work in progress**
+
+
 .. include:: summary.rst
 
 Contents
@@ -18,6 +21,7 @@ Contents
    Installation <installation>
    Project Description <project_description>
    Package <mqtt_gateways>
+   Configuration <configuration>
 
 
 Indices and tables

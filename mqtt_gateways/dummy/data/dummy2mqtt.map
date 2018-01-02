@@ -1,5 +1,5 @@
-topic:home/+/dummy/+/+/C
-topic:home/audiovideo/+/+/+/C
+topic:home/+/dummy/+/+/+/C
+topic:home/audiovideo/+/+/+/+/C
 function:lighting,Lighting
 function:audiovideo,AudioVideo
 location:office,Office
