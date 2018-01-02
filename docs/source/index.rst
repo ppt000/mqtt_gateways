@@ -3,10 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to mqtt_gateways's documentation!
+Welcome to MQTT_Gateways's documentation!
 =========================================
 
-.. image:: basic_diagram.png
+.. include:: summary.rst
 
 Contents
 ********
@@ -14,7 +14,7 @@ Contents
 .. toctree::
    :maxdepth: 1
    
-   Home <home>
+   Introduction <introduction>
    Installation <installation>
    Project Description <project_description>
    Package <mqtt_gateways>

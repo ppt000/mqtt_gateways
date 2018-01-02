@@ -19,6 +19,7 @@
 import os
 import sys
 sys.path.insert(0, os.path.abspath('../..'))
+sys.path.insert(0, os.path.abspath('../../../ppt_utils'))
 
 
 # -- General configuration ------------------------------------------------
@@ -75,7 +76,8 @@ language = None
 exclude_patterns = []
 
 # The name of the Pygments (syntax highlighting) style to use.
-pygments_style = 'sphinx'
+pygments_style = 'monokai'
+# available: sphinx, monokai, native
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
 todo_include_todos = False
@@ -86,8 +88,8 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'default'
-# try: 'default', 'pyramid', 'bizstyle'
+html_theme = 'bizstyle'
+# try: default, pyramid, bizstyle, alabaster, nature
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -107,6 +109,7 @@ html_static_path = ['_static']
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
 html_sidebars = {
     '**': [
+        'globaltoc.html',
         'relations.html',  # needs 'show_related': True theme option to display
         'searchbox.html',
     ]
