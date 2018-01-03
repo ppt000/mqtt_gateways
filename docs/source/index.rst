@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to MQTT_Gateways's documentation!
-=========================================
+Welcome to MQTT_Gateways!
+=========================
 
 **This is a work in progress**
 
@@ -14,8 +14,8 @@ What it does:
 
 * it deals with all the boilerplate code to manage an MQTT connection,
   to load configuration and mapping data, and to create appropriate log handlers,
-* it encapsulates the interface in a class declaration with only 2 methods
-  ``__init__`` and ``loop``,
+* it encapsulates the interface in a class declaration that needs only 2 methods
+  ``__init__`` and ``loop``, like an Arduino script,
 * it creates a messaging abstraction layer between the wrapper and the interface,
 * it isolates the syntax and keywords of the MQTT network from the internals of the interface.
 
@@ -26,14 +26,14 @@ Contents
 ********
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    
-   Introduction <introduction>
+   Overview <overview>
    Installation <installation>
-   Project Description <project_description>
    Package <mqtt_gateways>
    Configuration <configuration>
-
+   Concepts <concepts>
+   Reference <reference>
 
 Indices and tables
 ******************

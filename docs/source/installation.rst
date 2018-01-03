@@ -75,10 +75,12 @@ Edit the ``dummy2mqtt.conf`` file in the ``[MQTT]`` section:
 
 The address of the MQTT broker should be provided in the same format
 as expected by the **paho.mqtt** library, usually a raw IP address
-(``192.168.1.55`` for example),
-but anything else that the library will accept will be passed as is.
+(``192.168.1.55`` for example) if the broker is on your local network,
+or an http address (not tested) if your broker is in the cloud.
 The default port is 1883, if it is different it can also be indicated
 in the configuration file.
+
+Authentication is not available at this stage.
 
 For more details about the ``.conf`` file, defaults and command line arguments,
 go to `Configuration <configuration.html>`_.
@@ -168,7 +170,8 @@ Further Considerations
 **********************
 
 Other ways of installing this framework, as a library for example,
-might be implemented later if necessary.  As a consequence, the ``setup.py`` file
+might be implemented later if necessary.
+The ``setup.py`` file
 is only there for reference.  It has not been tested, even if it seems that at least
-readthedocs.org is using it succesfully...
+**readthedocs.org** is using it succesfully.
 Posting the project on PyPI should come at a later stage.
