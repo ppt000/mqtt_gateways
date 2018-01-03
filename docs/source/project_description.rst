@@ -72,3 +72,19 @@ Out of these 7 concepts, only 1 has predefined values (the type which can only b
 other ones have any number of possible values in the MQTT syntax. They each are a table in the database representation
 of the domestic network and therefore their corresponding values in the internal code of the gateway needs to be provided in the
 mapping file.
+
+
+The Mapping Data
+----------------
+
+The map file provides all the 'implementation dependent' MQTT data.  This is made of all the topics to subscribe to,
+as well as the actual mappings between the MQTT keywords and the ones used in the current specific gateway.
+These mappings should be provided for all the 'concepts' (location, device, ...) and keywords used by the gateway
+(see the project description for more details).
+The map file contains one piece of data per line.  Each line starts with the 'concept' that the piece of data is part of
+(consider that each 'concept' is basically a separate dictionary, except for topics that go simply in a list).
+It is followed by ``:`` and then the data: the actual topic to subscribe to, or a pair written as
+``MQTT_keyword,Internal_keyword`` (2 keywords separated by a comma ``,``).
+
+The map file provided for the ``dummy`` gateway is just there as example and is not used.  It is however loaded,
+and the topics that are there should be subscribed to when the application is launched.

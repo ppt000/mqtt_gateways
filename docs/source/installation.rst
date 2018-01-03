@@ -4,9 +4,11 @@ Installation
 Copying the repository
 **********************
 
-The easiest way to install this project is by cloning the whole repository
-into a directory named ``mqtt_gateways``.
-The only non-standard dependency is the **paho.mqtt** library.
+The easiest way to install this project is by copying the whole
+`github repository <https://github.com/ppt000/mqtt_gateways>`_
+into a directory named ``mqtt_gateways`` on your machine.  Clone it with ``git``
+or download the zip archive and extract all the files.
+The only non-standard dependency is the `paho.mqtt <https://pypi.python.org/pypi/paho-mqtt>`_ library.
 Please install it if you do not have it already in your environment.
 
 The directory structure of the relevant files should look like this:
@@ -126,7 +128,7 @@ with an ``&`` at the end), and watch the log file:
 	python -m mqtt_gateways.dummy.dummy2mqtt data/ &
 	tail -f mqtt_gateways/dummy/data/dummy2mqtt.log
 
-After the start-up phase, the **dummy** interface logs (at a DEBUG level)
+After the start-up phase, the *dummy* interface logs (at a DEBUG level)
 any MQTT it receives and emits a unique message every 30 seconds.
 Watch the messages being sent periodically from the logs.
 Start your favourite MQTT monitor app (I use ``mqtt-spy``).  Connect to your
@@ -149,7 +151,7 @@ You should see in the log that the message has been received
 by the gateway, and that it has been processed correctly, meaning that
 even if it does not do anything, the translation methods have worked.
 
-The Mapping data
+The mapping data
 ****************
 
 The mapping data is the link between MQTT and the internal language of the interface.
@@ -157,76 +159,16 @@ It maps every keyword in the MQTT vocabulary into the equivalent keyword in the 
 This mapping is a very simple one-to-one relationship for every keyword, and its use is only
 to isolate the internal code from any changes in the MQTT vocabulary.
 For the *dummy* interface, the mapping data is provided by the text file
-``dummy2mqtt.map`` in the ``data`` folder.
-  
-The map file provides all the 'implementation dependent' MQTT data.  This is made of all the topics to subscribe to,
-as well as the actual mappings between the MQTT keywords and the ones used in the current specific gateway.
-These mappings should be provided for all the 'concepts' (location, device, ...) and keywords used by the gateway
-(see the project description for more details).
-The map file contains one piece of data per line.  Each line starts with the 'concept' that the piece of data is part of
-(consider that each 'concept' is basically a separate dictionary, except for topics that go simply in a list).
-It is followed by ``:`` and then the data: the actual topic to subscribe to, or a pair written as
-``MQTT_keyword,Internal_keyword`` (2 keywords separated by a comma ``,``).
+``dummy2mqtt.map`` in the ``data`` folder.  It's just there as a template, as,
+once again, the *dummy* interface really doesn't do anything.
+Note that the map file also contains the topics that the interface should
+subscribe to.
 
-The map file provided for the ``dummy`` gateway is just there as example and is not used.  It is however loaded,
-and the topics that are there should be subscribed to when the application is launched.
+Further Considerations
+**********************
 
-
-
-
-
-Rejected Text
-*************
-
-.. full directory tree
-
-	mqtt_gateways/   (root)
-	\- mqtt_gateways/   (package)
-	   +- __init__.py
-	   +- gateway/
-	   |  +- __init__.py
-	   |  +- mqtt_map.py
-	   |  \- start_gateway.py
-	   |
-	   +- utils/
-	   |  +- __init__.py
-	   |  +- exception_throttled.py
-	   |  +- generate_filepath.py
-	   |  +- init_logger.py
-	   |  \- load_config.py
-	   |
-	   +- dummy/
-	      +- __init__.py
-	      +- dummy_interface.py
-	      +- dummy2mqtt.py
-	      \- data/
-	         +- dummy2mqtt.conf
-	         \- dummy2mqtt.map
-
-	         
-.. COMMENT
-	*It is not compulsory to name it that way but we will assume to be the case here.*
-
-.. COMMENT out the following paragraph for now
-	Other ways of installing this framework, as a library for example, might be implemented later, but frankly this is not really a library,
-	so I am not sure it should be installed that way.
-	There is a ``setup.py`` file to build distributions and to install them but I have not tested
-	it so far and that's why I have not posted this on PyPI (yet?).  I am not sure either it is necessary anyway.
-
-
-Any gateway should have a name describing the system it is interfacing.  Here it is *dummy* but in reality it will be
-something like *zingcee* or *zonos* for example.
-The gateway will be defined in a package with its own name (here ``dummy``) and will be called as an application as ``dummy2mqtt``
-(or ``zingcee2mqtt`` or ``zonos2mqtt``).  As a consequence, all data files will be called like the application ``dummy2mqtt``
-followed by the relevant extension.
-The gateway package has its own directory (called ``dummy``) under ``mqtt_gatewways``, containing at least 2 modules:
-``dummy_interface.py`` where the ``dummyInterface`` class has to be defined,
-and ``dummy2mqtt.py`` which is the launcher script.
-
-The ''dummyInterface`` class has to define at least 2 methods: the constructor ``__init__()`` and the method ``loop()`` which
-will be called periodically to process the events of the system being interfaced.
-In this case, nothing will be done by these methods.
-
-The ``dummy2mqtt.py`` launcher script is provided as a template, and any new gateway should not need to change much to this script
-in order to make it work.
-
+Other ways of installing this framework, as a library for example,
+might be implemented later if necessary.  As a consequence, the ``setup.py`` file
+is only there for reference.  It has not been tested, even if it seems that at least
+readthedocs.org is using it succesfully...
+Posting the project on PyPI should come at a later stage.
