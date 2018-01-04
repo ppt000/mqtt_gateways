@@ -130,11 +130,12 @@ with an ``&`` at the end), and watch the log file:
 	python -m mqtt_gateways.dummy.dummy2mqtt data/ &
 	tail -f mqtt_gateways/dummy/data/dummy2mqtt.log
 
-After the start-up phase, the *dummy* interface logs (at a DEBUG level)
+After the start-up phase, the **dummy** interface logs (at a DEBUG level)
 any MQTT it receives and emits a unique message every 30 seconds.
 Watch the messages being sent periodically from the logs.
-Start your favourite MQTT monitor app (I use ``mqtt-spy``).  Connect to your
-MQTT broker and subscribe to the topic:
+Start your favourite MQTT monitor app (I use
+`mqtt-spy <https://kamilfb.github.io/mqtt-spy/>`_).
+Connect to your MQTT broker and subscribe to the topic:
 
 .. code-block:: none
 
@@ -172,6 +173,6 @@ Further Considerations
 Other ways of installing this framework, as a library for example,
 might be implemented later if necessary.
 The ``setup.py`` file
-is only there for reference.  It has not been tested, even if it seems that at least
-**readthedocs.org** is using it succesfully.
+is only there for reference.  It has not been tested, but it seems that at least
+**readthedocs.org** is using it succesfully - it doesn't prove it works though.
 Posting the project on PyPI should come at a later stage.

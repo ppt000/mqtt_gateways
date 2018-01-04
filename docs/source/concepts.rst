@@ -1,7 +1,52 @@
-Project Description
-===================
+Concepts
+========
+
+The model
+*********
+
+The primary use case for this project is a domestic environment
+with multiple devices of any type: lights, audio video components,
+security devices, heating, air conditioning, controllers, keypads, etc...
+For many (good) reasons, MQTT has been selected as the communication
+protocol. But only a few, if any, devices are MQTT enabled.  Even for
+those devices that communicate natively through MQTT, agreeing on a
+syntax that make them exchange messages coherently is not easy.
 
 .. image:: domestic_iot.png
+   :scale: 50%
+
+To have all the devices communicating to each other via a MQTT network,
+one need first to make sure that all devices have access to that network
+by building the missing gateways.  Then one has to decide on a MQTT
+syntax to share among those devices.  Defining the syntax means making it
+easy to address devices and making it easy to exchange commands and statuses.
+
+.. image:: iot_parameters.png
+   :scale: 50%
+
+The *MQTT view* of our smart home shows the 2 gateways needed to
+interface the devices not yet connected to the MQTT network.  
+that 4 parameters stand out to define
+(and address) a device:
+
+- the device name,
+- its location, 
+- the name of the gateway it uses (if any),
+- the function of the device.
+
+Obviously the device name would be enough address a device
+if that name was unique across the whole network.  However
+a really flexible addressing model s
+Not all 4 parameters are necessary to define a device, but
+they allow to address a device in an intuitive manner (from a human
+perspective) as well as in a programmatic manner (from an application
+perspective).
+ (not necessarily where it is physically but where it operates,
+  e.g. an audio amplifier might be located in the basement but it is powering
+  speakers in the living room; the location is the living room)
+
+
+
 
 Genesis
 *******
