@@ -12,124 +12,141 @@ protocol. But only a few, if any, devices are MQTT enabled.  Even for
 those devices that communicate natively through MQTT, agreeing on a
 syntax that make them exchange messages coherently is not easy.
 
+Example
+-------
+
+In the example below, our smart home has some lighting connected
+in four different rooms through a proprietary network, four audio-video
+devices connected through another proprietary network, and some
+other devices that are already MQTT-enabled, but which still need
+to speak a common language. 
+
 .. image:: domestic_iot.png
    :scale: 50%
+   :align: center
+   :alt: Diagram of a smart home with some connected devices
 
-To have all the devices communicating to each other via a MQTT network,
-one need first to make sure that all devices have access to that network
-by building the missing gateways.  Then one has to decide on a MQTT
-syntax to share among those devices.  Defining the syntax means making it
-easy to address devices and making it easy to exchange commands and statuses.
+One of the objectives of this project is not only to define a common
+MQTT syntax, but also to make it as *intuitive* as possible.  Ideally,
+a human should be able to write a MQTT message off-hand and operate
+successfully any device in the network.
+
+Message Addressing
+------------------
+
+The first step of any message is to define its destination.  A flexible
+adressing model should allow for a heuristic approach based on a
+combination of characteristics of the recipient, on top of the
+standard deterministic approach (e.g. a unique device id).
+Four characteristics are usually considered:
+
+- the **function** of the device: lighting, security, audiovideo, etc;
+- its **location**;
+- its **gateway**: which application is managing that device, if any;
+- the name of the **device**
+
+In our example, a MQTT centric view shows how those four characteristics
+define all the devices in the network. The 2 gateways are also added.
 
 .. image:: iot_parameters.png
    :scale: 50%
+   :align: center
+   :alt: Diagram of a smart home from a MQTT network point of view
 
-The *MQTT view* of our smart home shows the 2 gateways needed to
-interface the devices not yet connected to the MQTT network.  
-that 4 parameters stand out to define
-(and address) a device:
+Some considerations about those four characteristics:
 
-- the device name,
-- its location, 
-- the name of the gateway it uses (if any),
-- the function of the device.
+- not all four characteristics need to be provided to address succesfully
+  a device, that is the whole point of being flexible;
+- any device can have more than one value for each characteristics; while
+  it is improbable for the **gateway** and **location** characteristics,
+  it is very possible for the **function** and **device** ones; 
+- the device name can be generic (e.g. *spotlight*) or specific and unique
+  within the network (e.g. *l1224*); in the generic case, obviously
+  other characteristics are needed to address the device.
+- the location is important and probably the most intuitive characteritic
+  of all; preferrably it should represent the place where the device
+  operates and not where it is physically located (e.g. an audio amplifier
+  might be in the basement but it powers speakers in the living room;
+  the location should be the living room); the location might even not be
+  defined (e.g. to address the security system of the house, or an audio
+  network player that can broadcast to multiple channels).
+- the gateway is the most deterministic characteritic (alongside a unique
+  device id); this should be the chosen route for fast and unambiguous
+  messaging.
+- the function is another important intuitive characteritic; not only it
+  helps in addressing devices (combined with a location for example), but
+  it should also help to clarify ambiguous commands (``ON`` with ``lighting``
+  or with ``audiovideo`` means different things). However things can get
+  more complicated if a device has more than one function; this should be
+  allowed, it is up to the gateway to make sure any ambiguity is resolved
+  from the other characteristics.
 
-Obviously the device name would be enough address a device
-if that name was unique across the whole network.  However
-a really flexible addressing model s
-Not all 4 parameters are necessary to define a device, but
-they allow to address a device in an intuitive manner (from a human
-perspective) as well as in a programmatic manner (from an application
-perspective).
- (not necessarily where it is physically but where it operates,
-  e.g. an audio amplifier might be located in the basement but it is powering
-  speakers in the living room; the location is the living room)
+Those four characteristics should ensure that the messaging model
+is flexible enough to be heuristic or deterministic.  A gateway
+will decide how flexible it wants to be.  If it has enough bandwidth,
+it can decide to subscribe to all **lighting** messages and then parse
+all messages received to check if they are actually addressed to it.
+Or it can subscribe only to messages addressed specifically to itself
+(through the gateway name), restricting access only to senders that
+know the name of that gateway (arguably not a very intuitive option).
+
+Message Content
+---------------
+
+The content of a message in the context of domestic IoT can be modelled
+in many different ways.  This project splits it into 3 *characteristics*:
+
+- a *2 values* **type**: *command* for messages that are requiring
+  an action to be performed, or *status* for messages that only broadcast
+  a state;
+- an **action** that indicates what to do or what the status is, or is
+  referring;
+- an **argument** that might complete the **action** characteristic.
+
+The key characteristic here is the **action**, a string that can represent
+anything.  Indeed the message content could be limited to it if the string
+contained all the information needed, like ``SWITCH_LIGHT_ON``,
+``CHANGE_VOLUME_+4``, OR ``REPORT_TEMPERATURE``.  However, separating
+those 3 elements eases the processing of internal messages in the code.
 
 
+Message Source
+--------------
 
-
-Genesis
-*******
-
-It all started when I realised that `MQTT <http://mqtt.org/>`_ was a really robust protocol while looking for a reliable way to connect the devices in my home.
-I was running an MQTT broker (mosquitto) on a server for a while, with some clients subscribing and publishing messages.
-
-As none of my devices were natively MQTT enabled (very few are), I needed an interface to translate messages from my devices (or sets of devices)
-to MQTT messages and back.  More importantly, I needed this interface to be able to communicate to other interfaces without having to
-re-write code every time I would need to change something. All this is pretty much standard stuff in the IoT world.
-
-As I did not find any *simple* tool to do this, I decided to write a re-usable abstraction layer to build MQTT gateways.
-
-Concepts
-********
-
-Without going back to the wheel, I needed to step back and appreciate what a message is made of in general, and what messages need
-to do in a domestic IoT environment.  By the way, this frames the target audience of this project: it is for domestic use in small networks.
-
-Messages have a source, a destination and a content.  As much as the source being present in a message is a 'nice to have', the destination and content are
-pretty much essential, otherwise there is no message.
-An MQTT message has a topic and a payload.  Generally a topic could be identified as destination and the payload as content.  In reality,
-the topic carries often more than pure destination information, and this makes the MQTT protocol particularly powerful and versatile.
-This is important to keep in mind.
-
-Destination
------------
-
-Any 'receiving' MQTT client is a potential destination that needs to subscribe to all the topics that could be addressed to it.
-Any 'sender' client needs to address a variety of devices and systems, but
-does not want to be constrained by a very restrictive addressing system, where a particular device needs to
-be addressed with a particular name, or worse, with an id that might change each time the device is replaced, for example.  Rather,
-the addressing system needs to be based on real-life concepts that are less likely to change with time, if at all.  These concepts
-are essentially the characteristics of a device that, taken together, define hopefully uniquely that device.
-Empirically, I have found that the following characteristics could be enough to define a device:
-
-- function: what the device does (lighting, security, audiovideo, ...);
-- location: where is the device or where it's action is being felt (an audio amplifier might be in a basement but it is powering speakers in the bedroom);
-- gateway: which application is managing that device, if any;
-- device: a unique identifier for the device, as a last resort.
-
-Any message having a combination of these characteristics (but not necessarily all of them) shoud be able to address properly
-a device.
-
-Content
--------
-
-The content of a message in the context of domestic IoT can be split into:
-
-- a type: *command* for messages that are requiring an action to be performed, or *status* for messages
-  that only broadcast to interested parties that some status has changed;
-
-- a characteristic of the device that needs to be changed in case of a *command*, or that needs to broadcast
-  its state in case of a *status* (e.g. 'device=on' which can mean 'turn it on' if the type is *command*,
-  or can mean 'device is now on' if type is *status*).
-
-Source
-------
-
-Any message can carry its source, which can be a device or a gateway, depending on what makes more sense.
-Again, this should never be compulsory but can be very helpful to filter messages.
+Any message can carry its source, which can be a device or a gateway,
+depending on what makes more sense. Again, this should never be compulsory
+but can be very helpful to filter messages.
 
 Summary
 -------
 
-There are therefore 7 'concepts' (function, location, gateway, device, type, content, source) in a message for our project framework.
-Out of these 7 concepts, only 1 has predefined values (the type which can only be a command or a status).  All the 
-other ones have any number of possible values in the MQTT syntax. They each are a table in the database representation
-of the domestic network and therefore their corresponding values in the internal code of the gateway needs to be provided in the
-mapping file.
+There are therefore 7 'concepts' (function, location, gateway, device, type,
+content, source) in a message for our project framework.
+Out of these 7 concepts, only 1 has predefined values (the type which can only
+be a command or a status).  All the other ones have any number of possible
+values in the MQTT syntax. They each are a table in the database representation
+of the domestic network and therefore their corresponding values in the
+internal code of the gateway needs to be provided in the mapping file.
 
 
 The Mapping Data
 ----------------
 
-The map file provides all the 'implementation dependent' MQTT data.  This is made of all the topics to subscribe to,
-as well as the actual mappings between the MQTT keywords and the ones used in the current specific gateway.
-These mappings should be provided for all the 'concepts' (location, device, ...) and keywords used by the gateway
-(see the project description for more details).
-The map file contains one piece of data per line.  Each line starts with the 'concept' that the piece of data is part of
-(consider that each 'concept' is basically a separate dictionary, except for topics that go simply in a list).
-It is followed by ``:`` and then the data: the actual topic to subscribe to, or a pair written as
-``MQTT_keyword,Internal_keyword`` (2 keywords separated by a comma ``,``).
+The map file provides all the 'implementation dependent' MQTT data.
+This is made of all the topics to subscribe to, as well as the actual
+mappings between the MQTT keywords and the ones used in the current specific
+gateway.
+These mappings should be provided for all the 'concepts' (location,
+device, ...) and keywords used by the gateway (see the project description
+for more details).
+The map file contains one piece of data per line.  Each line starts with
+the 'concept' that the piece of data is part of (consider that each
+'concept' is basically a separate dictionary, except for topics that go
+simply in a list).
+It is followed by ``:`` and then the data: the actual topic to subscribe to,
+or a pair written as ``MQTT_keyword,Internal_keyword`` (2 keywords separated
+by a comma ``,``).
 
-The map file provided for the ``dummy`` gateway is just there as example and is not used.  It is however loaded,
-and the topics that are there should be subscribed to when the application is launched.
+The map file provided for the ``dummy`` gateway is just there as example
+and is not used.  It is however loaded, and the topics that are there should
+be subscribed to when the application is launched.

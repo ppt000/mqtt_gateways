@@ -16,11 +16,13 @@ Welcome to MQTT_Gateways
 What it does:
 
 * it deals with all the boilerplate code to manage an MQTT connection,
-  to load configuration and mapping data, and to create appropriate log handlers,
+  to load configuration and mapping data, and to create log handlers,
 * it encapsulates the interface in a class that needs only 2 methods
   ``__init__`` and ``loop``,
-* it creates a messaging abstraction layer between the wrapper and the interface,
-* it isolates the syntax and keywords of the MQTT network from the internals of the interface.
+* it creates an intuitive messaging abstraction layer between the wrapper
+  and the interface,
+* it isolates the syntax and keywords of the MQTT network from the internals
+  of the interface.
 
 Who is it for:
 
