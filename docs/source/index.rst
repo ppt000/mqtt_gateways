@@ -26,9 +26,10 @@ What it does:
 
 Who is it for:
 
-	Users of MQTT networks in a domestic environment, or *smart homes*,
-	looking to adopt a definitive syntax for their MQTT messages and
-	to build gateways with their devices that are not MQTT enabled.
+Users of MQTT networks in a domestic environment, or *smart homes*,
+looking to adopt a definitive syntax for their MQTT messages and
+to build gateways with their devices that are not MQTT enabled.
+
 
 Contents
 ********

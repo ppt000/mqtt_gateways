@@ -1,8 +1,7 @@
 
 **This is a work in progress**
 
-Please find the documentation at:
-`<http://mqtt-gateways.readthedocs.io/>`_
+Please find the documentation `here<http://mqtt-gateways.readthedocs.io/>`_.
 
 Welcome to MQTT_Gateways
 =========================
@@ -25,8 +24,8 @@ What it does:
 
 Who is it for:
 
-	Users of MQTT networks in a domestic environment, or *smart homes*,
-	looking to adopt a definitive syntax for their MQTT messages and
-	to build gateways with their devices that are not MQTT enabled.
+Users of MQTT networks in a domestic environment, or *smart homes*,
+looking to adopt a definitive syntax for their MQTT messages and
+to build gateways with their devices that are not MQTT enabled.
 
 
