@@ -12,6 +12,7 @@ Welcome to MQTT_Gateways
    :scale: 50%
 
 What it does:
+-------------
 
 * it deals with all the boilerplate code to manage an MQTT connection,
   to load configuration and mapping data, and to create log handlers,
@@ -23,6 +24,7 @@ What it does:
   of the interface.
 
 Who is it for:
+--------------
 
 Users of MQTT networks in a domestic environment, or *smart homes*,
 looking to adopt a definitive syntax for their MQTT messages and
