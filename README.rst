@@ -1,7 +1,7 @@
 
 **This is a work in progress**
 
-Please find the documentation `here<http://mqtt-gateways.readthedocs.io/>`_.
+Please find the documentation `here <http://mqtt-gateways.readthedocs.io/>`_.
 
 Welcome to MQTT_Gateways
 =========================
