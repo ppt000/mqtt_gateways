@@ -1,8 +1,8 @@
 Concepts
 ========
 
-The model
-*********
+The message model
+*****************
 
 The primary use case for this project is a domestic environment
 with multiple devices of any type: lights, audio video components,
@@ -35,17 +35,17 @@ Message Addressing
 ------------------
 
 The first step of any message is to define its destination.  A flexible
-adressing model should allow for a heuristic approach based on a
+addressing model should allow for a heuristic approach based on a
 combination of characteristics of the recipient, on top of the
 standard deterministic approach (e.g. a unique device id).
 Four characteristics are usually considered:
 
-- the **function** of the device: lighting, security, audiovideo, etc;
+- the **function** of the device: lighting, security, audio-video, etc;
 - its **location**;
 - its **gateway**: which application is managing that device, if any;
 - the name of the **device**
 
-In our example, a MQTT centric view shows how those four characteristics
+In our example, a MQTT view shows how those four characteristics
 define all the devices in the network. The 2 gateways are also added.
 
 .. image:: iot_parameters.png
@@ -56,24 +56,25 @@ define all the devices in the network. The 2 gateways are also added.
 Some considerations about those four characteristics:
 
 - not all four characteristics need to be provided to address succesfully
-  a device, that is the whole point of being flexible;
+  a device;
 - any device can have more than one value for each characteristics; while
-  it is improbable for the **gateway** and **location** characteristics,
-  it is very possible for the **function** and **device** ones; 
-- the device name can be generic (e.g. *spotlight*) or specific and unique
+  it is improbable for the **gateway** and **location** characteristics
+  to have more than one value, it is a possibility for the **function**
+  and **device** ones; 
+- the **device** name can be generic (e.g. *spotlight*) or specific and unique
   within the network (e.g. *l1224*); in the generic case, obviously
   other characteristics are needed to address the device.
-- the location is important and probably the most intuitive characteritic
-  of all; preferrably it should represent the place where the device
+- the **location** is important and probably the most intuitive characteristic
+  of all; preferably it should represent the place where the device
   operates and not where it is physically located (e.g. an audio amplifier
   might be in the basement but it powers speakers in the living room;
   the location should be the living room); the location might even not be
   defined (e.g. to address the security system of the house, or an audio
   network player that can broadcast to multiple channels).
-- the gateway is the most deterministic characteritic (alongside a unique
+- the **gateway** is the most deterministic characteristic (alongside a unique
   device id); this should be the chosen route for fast and unambiguous
   messaging.
-- the function is another important intuitive characteritic; not only it
+- the **function** is another important intuitive characteristic; not only it
   helps in addressing devices (combined with a location for example), but
   it should also help to clarify ambiguous commands (``ON`` with ``lighting``
   or with ``audiovideo`` means different things). However things can get
@@ -106,23 +107,110 @@ in many different ways.  This project splits it into 3 *characteristics*:
 The key characteristic here is the **action**, a string that can represent
 anything.  Indeed the message content could be limited to it if the string
 contained all the information needed, like ``SWITCH_LIGHT_ON``,
-``CHANGE_VOLUME_+4``, OR ``REPORT_TEMPERATURE``.  However, separating
+``CHANGE_VOLUME_+4``, or ``REPORT_TEMPERATURE``.  However, separating
 those 3 elements eases the processing of internal messages in the code.
 
 
 Message Source
 --------------
 
-Any message can carry its source, which can be a device or a gateway,
-depending on what makes more sense. Again, this should never be compulsory
-but can be very helpful to filter messages.
+The source of a message has always been a nice to have rather than an
+obligation, and it should not be any different here.  The sender, which
+can be a device or a gateway, is considered as another optional characteristic
+in our message model.
 
-Summary
--------
+Bridging MQTT and the interface
+*******************************
 
-There are therefore 7 'concepts' (function, location, gateway, device, type,
-content, source) in a message for our project framework.
-Out of these 7 concepts, only 1 has predefined values (the type which can only
+There are therefore a total of 8 characteristics in our message model:
+
+- **function**,
+- **location**,
+- **gateway**,
+- **device**,
+- **type**,
+- **action**,
+- **argument** of action,
+- **source**.
+
+They are all strings except **type** which can only have 2 predefined values.
+They are all the fields that can appear in a MQTT message, either in the topic
+or in the pay-load.
+They are all attributes of the internal message class that is used to exchange
+messages between the core of the application (the *wrapper*) and the interface
+being developed.
+They are all the characteristics available to the developer to code its
+interface.
+
+The internal message class
+--------------------------
+
+The internal message class :class:`internalMsg` defines the objects stored
+in the lists shared by the application core and the interface.
+It is supposed to be the most useful representation of a message for the
+interface code.  All that the framework does is parse MQTT messages into
+internal ones, and back.  The framework therefore defines the MQTT syntax by
+the way it `converts` the messages.
+
+The conversion process
+-----------------------
+
+This conversion process happens inside the class :class:`msgMap` with the
+methods :meth:`MQTT2Internal` and :meth:`Internal2MQTT`.  These methods
+achieve 2 things:
+
+- map the keywords for every characteristic between the MQTT *vocabulary* and
+  the internal one; this is done via a simple dictionary initialised by a
+  *mapping file*,
+- define intrinsically the syntax of the MQTT messages in the way the various
+  characteristics are positioned within the MQTT topic and payload.
+
+The MQTT syntax
+---------------
+
+The syntax chosen here positions 6 characteristics in the topic and 2 in the
+payload. The topic is structured like this:
+
+.. code-block:: none
+
+	root/function/gateway/location/device/source/type
+
+where ``root`` can be anything the developper wants (``home`` for example)
+and ``type`` can be only ``C`` or ``S``.
+	
+The payload is simply the action alone if there are no arguments:
+
+.. code-block:: none
+
+	action
+	
+or the action with the arguments all in a query string style like this:
+
+.. code-block:: none
+
+	action=action_name&arg1=value1&arg2=value2
+	
+where the first ``action`` key is written as is and the other argument keys
+can be chosen by the developer and will be simply copied in the **argument**
+dictionary characteristic.
+
+The mapping data
+----------------
+
+
+  This is based on a simple one-to-one relationship between
+  all these keywords and ensures that whatever keyword is used in the interface
+  code is not affected by any change in the MQTT vocabulary. For example, assume a
+  location name in the MQTT vocabulary is ``basement`` and is related to the
+  internal constant ``BASEMENT`` used inside the interface code.  If for some reason
+  the name in the MQTT vocabulary 
+
+
+
+
+
+
+(the type which can only
 be a command or a status).  All the other ones have any number of possible
 values in the MQTT syntax. They each are a table in the database representation
 of the domestic network and therefore their corresponding values in the

@@ -50,26 +50,33 @@ _UNDEFINED = 'undefined'
 
 class internalMsg():
     '''
-    Defines all the elements of an internal message.
+    Defines all the characteristics of an internal message.
+    Despite all the defaults, for the message to make sense:
+    - the action parameter should be provided,
+    - the location or the device should be provided as well.
+
+    Parameters
+    ----------        
+    iscmd : boolean, optional
+        indicates if the message is a command (True) or a status (False)
+    function : string, optional
+        internal representation of function
+    gateway : string, optional
+        internal representation of gateway
+    location : string, optional
+        internal representation of location
+    device : string, optional
+        internal representation of device
+    action : string, optional
+        internal representation of action
+    arguments : dictionary of strings, optional
+        all values should be assumed to be strings, even if numeric
+        
+    Raises
+    ------
     '''
-    def __init__(self, iscmd = False, function='', gateway = '', location='', device = '', action='', arguments= {}):
-        ''' internalMsg constructor
-        
-        All strings default to '', boolean to False and objects to empty object.
-        
-        Despite all the defaults, for the message to make sense:
-        - the action parameter should be provided,
-        - the location or the device should be provided as well.
-        
-        @param iscmd: boolean to indicate if the message is a command (True) or a status (False)
-        @param function: internal representation of function, if any
-        @param gateway: internal representation of gateway, if any
-        @param location: internal representation of location, if any
-        @param device: internal representation of device, if any
-        @param action: internal representation of action
-        @param arguments: dictionary of arguments, if any
-        @errors: none
-        '''
+    def __init__(self, iscmd = False, function='', gateway = '',
+                 location='', device = '', action='', arguments= {}):
         self.iscmd = iscmd
         self.function = function
         self.gateway = gateway
@@ -79,6 +86,8 @@ class internalMsg():
         self.arguments = arguments
         
     def str(self):
+        '''Helper function to stringify the class attributes.
+        '''
         return ''.join(('cmd=',str(self.iscmd),
                         ';function=',self.function,
                         ';gateway=',self.gateway,

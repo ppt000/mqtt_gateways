@@ -56,7 +56,7 @@ Installation
 ************
 
 The installation involves a simple copy of the repository and the setting of
-some basic configutation parameters.  The only dependency is the
+some basic configuration parameters.  The only dependency is the
 `paho.mqtt <https://pypi.python.org/pypi/paho-mqtt>`_ library.
 
 For the full installation guide, go to `Installation <installation.html>`_.
