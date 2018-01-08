@@ -1,5 +1,4 @@
 
-**This is a work in progress**
 
 Please find the documentation `here <http://mqtt-gateways.readthedocs.io/>`_.
 

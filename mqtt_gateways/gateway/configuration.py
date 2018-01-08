@@ -7,6 +7,7 @@ If an external configuration file is read and contains sections and options not
 included in here, they will be ignored, except for the ``[INTERFACE]`` section.
 The section ``[INTERFACE]`` is reserved to the configuration parameters that might be
 needed by the interface being implemented.
+
 Use this declaration as a template configuration file.
 '''
 
