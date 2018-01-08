@@ -28,3 +28,11 @@ mqtt\_gateways\.gateway\.start\_gateway module
     :undoc-members:
     :show-inheritance:
 
+mqtt\_gateways\.gateway\.configuration module
+----------------------------------------------
+
+.. automodule:: mqtt_gateways.gateway.configuration
+    :members:
+    :undoc-members:
+    :show-inheritance:
+

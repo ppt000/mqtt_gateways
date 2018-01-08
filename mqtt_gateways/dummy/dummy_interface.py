@@ -18,7 +18,7 @@ from mqtt_gateways.gateway.mqtt_map import internalMsg
 
 class dummyInterface():
     '''
-    The dummyInterface class doesn't do anything but provides a template.
+    The ``dummyInterface`` class doesn't do anything but provides a template.
     
     The minimum requirement for the interface class is to define 2 public
     methods:
@@ -31,9 +31,7 @@ class dummyInterface():
     params : dictionary of strings
         This dictionary is initialised by the ``[INTERFACE]`` section in
         the configuration file.  All the options in that section generate an
-        entry in the dictionary, with the key being the first part of the
-        option, and the value being the second part of the option (after the
-        semi-colon ``:``). Use this to pass parameters from the configuration
+        entry in the dictionary. Use this to pass parameters from the configuration
         file to the interface, for example the name of a port, or the speed
         of a serial communication.
     msgin, msgout : lists of ``internalMsg`` objects

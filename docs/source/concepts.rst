@@ -97,7 +97,7 @@ Message Content
 The content of a message in the context of domestic IoT can be modelled
 in many different ways.  This project splits it into 3 *characteristics*:
 
-- a *2 values* **type**: *command* for messages that are requiring
+- a **type** with 2 possible values: *command* for messages that are requiring
   an action to be performed, or *status* for messages that only broadcast
   a state;
 - an **action** that indicates what to do or what the status is, or is
@@ -114,8 +114,8 @@ those 3 elements eases the processing of internal messages in the code.
 Message Source
 --------------
 
-The source of a message has always been a nice to have rather than an
-obligation, and it should not be any different here.  The sender, which
+The source of a message has always been a nice to have,
+and it should not be any different here.  The sender, which
 can be a device or a gateway, is considered as another optional characteristic
 in our message model.
 
@@ -135,7 +135,7 @@ There are therefore a total of 8 characteristics in our message model:
 
 They are all strings except **type** which can only have 2 predefined values.
 They are all the fields that can appear in a MQTT message, either in the topic
-or in the pay-load.
+or in the payload.
 They are all attributes of the internal message class that is used to exchange
 messages between the core of the application (the *wrapper*) and the interface
 being developed.
@@ -197,44 +197,33 @@ dictionary characteristic.
 The mapping data
 ----------------
 
+The conversion between MQTT keywords and internal ones is based on a simple
+one-to-one relationship table for each of the 5 characteristics (all except
+**type**, **argument** and **source**) .  It ensures that whatever keyword is used in
+the interface code is not affected by any change in the MQTT vocabulary.
+For example, let's assume a location name in the MQTT vocabulary is ``basement``
+and is related to the internal constant ``BASEMENT`` used inside the interface code.
+If for some reason the name in the MQTT vocabulary needs to be changed to
+``lowergroundfloor```, this can be done in the mapping table without touching the
+interface code.  It is a minor feature but it helps to really separate the
+MQTT world from the internal interface.
 
-  This is based on a simple one-to-one relationship between
-  all these keywords and ensures that whatever keyword is used in the interface
-  code is not affected by any change in the MQTT vocabulary. For example, assume a
-  location name in the MQTT vocabulary is ``basement`` and is related to the
-  internal constant ``BASEMENT`` used inside the interface code.  If for some reason
-  the name in the MQTT vocabulary 
+Currently the mapping data is provided by a simple text file where every line
+contains a one-to-one relationship for a characteristic, with the format:
 
+.. code-block:: none
 
+	characteristic:MQTT_keyword,interface_keyword
 
+The mapping file also contains the topics to subscribe to, in the format:
 
+.. code-block:: none
 
+	topic: whatever/topic/to/subscribe/to
+	topic: another/topic/to/subscribe/to
 
-(the type which can only
-be a command or a status).  All the other ones have any number of possible
-values in the MQTT syntax. They each are a table in the database representation
-of the domestic network and therefore their corresponding values in the
-internal code of the gateway needs to be provided in the mapping file.
+The order of those lines does not matter.
 
-
-The Mapping Data
-----------------
-
-The map file provides all the 'implementation dependent' MQTT data.
-This is made of all the topics to subscribe to, as well as the actual
-mappings between the MQTT keywords and the ones used in the current specific
-gateway.
-These mappings should be provided for all the 'concepts' (location,
-device, ...) and keywords used by the gateway (see the project description
-for more details).
-The map file contains one piece of data per line.  Each line starts with
-the 'concept' that the piece of data is part of (consider that each
-'concept' is basically a separate dictionary, except for topics that go
-simply in a list).
-It is followed by ``:`` and then the data: the actual topic to subscribe to,
-or a pair written as ``MQTT_keyword,Internal_keyword`` (2 keywords separated
-by a comma ``,``).
-
-The map file provided for the ``dummy`` gateway is just there as example
-and is not used.  It is however loaded, and the topics that are there should
-be subscribed to when the application is launched.
+The default name of the file is the application name followed with the
+``map`` extension, but this can be changed in the configuration as well
+as its location.

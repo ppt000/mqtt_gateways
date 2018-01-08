@@ -31,11 +31,19 @@ sys.path.insert(0, os.path.abspath('../../../ppt_utils'))
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
-extensions = ['sphinx.ext.autodoc',
-    'sphinx.ext.githubpages',
-    'sphinx.ext.napoleon']
+extensions = [
+    'sphinx.ext.autodoc'
+#    ,'sphinx.ext.githubpages'
+#    ,'numpydoc'
+    ,'sphinx.ext.napoleon'
+    ]
 
-napoleon_use_param = False
+#numpydoc_show_inherited_class_members = False
+#numpydoc_show_class_members = False
+#napoleon_use_param = True
+#napoleon_numpy_docstring = True
+napoleon_google_docstring = True
+#napoleon_include_init_with_doc = False
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -88,8 +96,8 @@ todo_include_todos = False
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = 'bizstyle'
-# try: default, pyramid, bizstyle, alabaster, nature
+html_theme = 'sphinx_rtd_theme'
+# try: default, pyramid, bizstyle, alabaster, nature, sphinx_rtd_theme
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
@@ -107,13 +115,14 @@ html_static_path = ['_static']
 #
 # This is required for the alabaster theme
 # refs: http://alabaster.readthedocs.io/en/latest/installation.html#sidebars
-html_sidebars = {
-    '**': [
-        'globaltoc.html',
-        'relations.html',  # needs 'show_related': True theme option to display
-        'searchbox.html',
-    ]
-}
+# Paolo 7Jan2018: commented out the html_sidebars definition
+#html_sidebars = {
+#    '**': [
+#        'globaltoc.html',
+#        'relations.html',  # needs 'show_related': True theme option to display
+#        'searchbox.html',
+#    ]
+#}
 
 
 # -- Options for HTMLHelp output ------------------------------------------

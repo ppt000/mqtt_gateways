@@ -2,7 +2,7 @@
 Launcher script for the dummy gateway.
 
 Use this as a template.
-If the name conventions have been respected, just change all occurences of 
+If the name conventions have been respected, just change all occurrences of 
 `dummy` into the name of your gateway.
 '''
 

@@ -74,10 +74,6 @@ message objects (an incoming and an outgoing one).  It reads the incoming list
 for commands from the MQTT environment and writes into the outgoing list any
 updates on status or commands sent from the devices to the rest of the network.
 
-.. note::
-	The 2 lists of message objects can probably be merged. I will look
-	into this. 
-
 In the most classic example, a serial interface is the only way to communicate with
 the device.  The ``__init__`` method would initialise the serial port and the
 ``loop`` method would write to the serial port any command received from the

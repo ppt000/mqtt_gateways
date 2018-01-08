@@ -1,26 +1,16 @@
 '''
-Created on 3 Oct 2017
-Last checked on 17 Nov 2017
+Defines the function that starts the gateway and the 3 MQTT callbacks.
 
-This module defines the 3 MQTT callbacks and the function that does all the hard
-work to start the gateway.
+This module exposes the main entry points for the framework: the gateway
+interface class, which is received as an argument by the main function
+:func:`startgateway`, and is instantiated after all the initialisations are
+done. Note that at the moment of instantiation, the configuration file should be
+loaded, so anything that is written inside the ``[INTERFACE]`` section will be passed
+on to the class constructor.  This way custom configuration settings can be passed
+on to the gateway interface.
 
-It also contains the default configuration settings.
-
-This module exposes the main entry points for the framework:
-
-    The gateway interface class, which is received as an argument by the main
-    function 'startgateway()', and is instantiated after all the initialisations are
-    done. Note that at the moment of instantiation, the configuration file should be
-    loaded, so anything that is written inside the 'device' option of the
-    'INTERFACE' section will be passed on to the class constructor.  This way,
-    custom configuration settings can be passed on to the gateway interface.
-    
-    The gateway interface class is expected to have a proper __init__() method
-    (constructor) with the appropriate parameters, as well as the loop() method,
-    which allows the interface to do whatever it needs to do at regular intervals.
-
-@author: PierPaolo
+.. TODO
+    Move the mqtt callbacks in a different module inside a class?
 '''
 
 import logging
@@ -36,58 +26,7 @@ from mqtt_gateways.utils.generate_filepath import generatefilepath
 from mqtt_gateways.utils.exception_throttled import ThrottledException
 
 from mqtt_gateways.gateway.mqtt_map import msgMap
-
-'''
-The CONFIG constant defines all the default configuration settings, as well as
-defining all the sections and options available for the configuration. Given how
-the configuration loader works, only the sections and options declared already
-here will be considered in any external configuration file.  If an external
-configuration file is read and contains sections and options not included in
-here, they will be ignored.
-The section INTERFACE is reserved to the configuration parameters that might be
-needed by the interface being implemented. It has 4 separate placeholders, just
-in case (even if one should be enough...).
-Use this declaration as a template configuration file.
-'''
-CONFIG = '''
-# See notes on file paths at the end
-[CONFIG]
-# Placeholder used by the loader to return the location where the configuration settings are coming from, or an error
-[INTERFACE]
-# Placeholder for whatever is needed by the gateway interface
-[MQTT]
-# The parameters to connect to the MQTT broker
-host: 127.0.0.1
-port: 1883
-keepalive: 60
-# This is the timeout of the 'loop()' call in the mqtt library
-timeout: 0.01
-# The reconnection is attempted every 'reconnect_delay' seconds
-reconnect_delay: 30
-# Maximum number of reconnection attempts
-max_reconnect_attempts: 120
-# Map file. Default name is <*application_name*.map>.
-mapfilename: data/
-[LOG]
-# All logs above and including WARN are sent to syslog or equivalent, to log below that a file location is needed.
-# Log file. Default name is <*application_name*.log>. Make sure the process will have the rights to it.
-logfilename: data/
-# Turn debug 'on' if logging of all debug messages is required, otherwise its INFO
-debug: off
-# Email credentials
-host: 127.0.0.1
-port: 25
-address: me@example.com
-# Note on file paths (or file names):
-#   - the default name is 'application_name' + default extension (.log, .map, ... etc);
-#   - the default path is the 'application' directory, which 'should' be the location of the launching script;
-#   - file paths can be empty in which case the default name and path will be used;
-#   - file paths can be directory only (ends with a '/') and are appended with the default name;
-#   - file paths can be absolute or relative; absolute start with a '/' and relative are prepended with the default directory;
-#   - file 'paths' can be file only (no '/' whatsoever) and are prepended with the default directory;
-#   - use forward slashes '/' in any case, even for Windows systems, it should work;
-#   - however for Windows systems, use of the drive letter might be an issue and has not been tested.
-'''
+from mqtt_gateways.gateway.configuration import CONFIG
 
 _THROTTLELAG = 600 # in seconds
 
@@ -109,9 +48,10 @@ userdata= [mqttparams, gtwint, msgmap, logger]
 '''
 def on_connect(client, userdata, flags, rc):
     '''
-    The MQTT callback when a connection is established. It sets to True the
-    member field 'connected' of the mqttparams instance and subscribes to the
-    topics available in the message map.
+    The MQTT callback when a connection is established.
+    
+    It sets to True the member field ``connected`` of the :data:`mqttparams`
+    instance and subscribes to the topics available in the message map.
     '''
     logger = userdata[3]
     logger.info(''.join(('Connected with result code <', str(rc), '>.')))
@@ -127,9 +67,11 @@ def on_connect(client, userdata, flags, rc):
 
 def on_disconnect(client, userdata, rc):
     '''
-    The MQTT callback when a disconnection occurs. It sets to False the member
-    field 'connected' of the mqttparams instance and initiates the relevant
-    variables to start the active monitoring of the reconnection attempts.
+    The MQTT callback when a disconnection occurs.
+    
+    It sets to False the member field ``connected`` of the :data:`mqttparams`
+    instance and initiates the relevant variables to start the active monitoring
+    of the reconnection attempts.
     '''
     logger = userdata[3]
     logger.info(''.join(('Client has disconnected with code <', str(rc),'>.')))
@@ -140,8 +82,9 @@ def on_disconnect(client, userdata, rc):
     
 def on_message(client, userdata, mqttMsg):
     '''
-    The MQTT callback when a message is received from the MQTT broker. The
-    message (topic and payload) is mapped into its internal representation and
+    The MQTT callback when a message is received from the MQTT broker.
+    
+    The message (topic and payload) is mapped into its internal representation and
     then appended to the incoming message list for the gateway interface to
     execute it later.
     '''
@@ -156,43 +99,53 @@ def on_message(client, userdata, mqttMsg):
 
 def startgateway(gatewayInterface, fullpath = None):
     '''
+    Initialisation and main loop.
+    
     Initialises the configuration and the logger, starts the interface,
-    and starts the MQTT communication.
-     
+    starts the MQTT communication then starts the main loop.
     The loop calls the MQTT loop method to process any message from the broker,
     then calls the gateway interface loop, and finally publishes all MQTT
     messages queued.
     
-    Notes:
-    - if not connected, the loop() and publish() methods will not do anything, but raise no errors either.
-    - it seems that the loop() method handles always only one message per call.
+    Notes on MQTT behaviour:
     
-    Note on the configuration file: it is the only file that needs to be either
-    passed as argument through the command line, or inferred. All other
-    filenames will be in the configuration file itself. The configuration file
-    name can be passed as the first argument on the command line.  If the
-    argument is a directory (i.e. ends with a slash) then it is appended with
-    the default file name. If it is a path it is checked to see if it is
-    absolute, and if it is not it will be prepended with the path of the calling
-    script.  The default file name is the name of the calling script (without
-    extension) followed by '.conf'.  The default directory is the directory of
+    - if not connected, the `loop` and `publish` methods will not do anything,
+      but raise no errors either.
+    - it seems that the `loop` method handles always only one message per call.
+    
+    Notes on the loading of data:
+    the configuration file is the only file that needs to be either
+    passed as argument through the command line, or the default settings will
+    be used (and probably fail as one needs at least a valid MQTT broker for
+    the application to start).  All other filenames will be in the configuration
+    file itself. The configuration file name can be passed as the first argument
+    in the command line.  If the argument is a directory (i.e. ends with a slash)
+    then it is appended with the default file name. If it is a path it is checked
+    to see if it is absolute, and if it is not it will be prepended with the path
+    of the calling script.  The default file name is the name of the calling script
+    with the ``.conf`` extension.  The default directory is the directory of
     the calling script.
     
-    @param gatewayInterface: the class (not an instance of it!) representing the
-    interface; the only requirement is that it should have an appropriate
-    constructor (with the right number of arguments) and a loop() method.
-    @param fullpath: the absolute path of the application; it will be useful to
-    find the various files that are defined by a relative path. If not available
-    the current directory will be used, but what 'current' means might be
-    subject to interpretation depending on how the script is launched.
+    Args:
+        gatewayInterface (class (not an instance of it!)): the interface
+            The only requirement is that it should have an appropriate constructor
+            and a ``loop`` method.
+        fullpath (string): the absolute path of the application
+            It will be useful to find the various files that are defined by a
+            relative path. If not available the current directory will be used,
+            but what 'current' means might be subject to interpretation depending
+            on how the script is launched.
 
-    @raise: the function raises an exception if any of the necessary files are
-    not found, these being the configuration file (which is necessary to define
-    the mqtt broker, at the very least) and the map (for which there can not be
-    any default).  It tries to catch most other 'possible' exceptions.
-    KeyboardInterrupt should work as there are a few pauses around. Finally,
-    only errors thrown by the provided interface class will not be caught and
-    could terminate the application.
+    Raises:
+        OSError: if any of the necessary files are not found.
+        
+            The necessary files are the configuration file (which is necessary to define
+            the mqtt broker, at the very least) and the map (for which there can not be
+            any default).
+            It tries to catch most other 'possible' exceptions.
+            KeyboardInterrupt should work as there are a few pauses around. Finally,
+            only errors thrown by the provided interface class will not be caught and
+            could terminate the application.
     '''
     
     ''' Process fullpath '''
