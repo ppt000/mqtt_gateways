@@ -8,7 +8,8 @@ Welcome to MQTT_Gateways
 ``mqtt_gateways`` is a python wrapper to build consistent gateways to MQTT networks.
 
 .. image:: docs/source/basic_diagram.png
-   :scale: 50%
+   :scale: 30%
+   :align: right
 
 What it does:
 -------------
