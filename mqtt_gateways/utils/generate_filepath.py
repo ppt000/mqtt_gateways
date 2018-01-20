@@ -1,41 +1,49 @@
 '''
-Created on 15 Nov 2017
-
-@author: Paolo
+Full file path generator.
 '''
 
 import os.path
 
-def generatefilepath(name, path, ext, pathgiven = ''):
+def generatefilepath(basename, ext, absdirpath, pathgiven):
     '''
-    Helper function to generate the right absolute path from a range of possible
+    Generates the absolute path of a file.
+
+    This function takes a path as argument and builds an absolute path
+    to a file based on default arguments, with some basic rules.
+    There are 3 'default' arguments: the basename of the file,
+    the extension of the file, and an absolute path.
+    
+    from a range of possible
     scenarios. It takes 4 arguments, 3 of them to generate defaults and the last
     one to suggest alternatives from the user. If no alternative from the user
     is provided, the function simply returns the default absolute path with the
     correct extension. If an alternative is provided it could be one of 4 cases,
     depending if the directory path is absolute or relative, and if a filename
     at the end is provided or not. If the path is relative, the application path
-    is prepended. If the filename is missing, the default name is provided. The
+    is prepended. If the filename is missing, the default basename is provided. The
     full absolute path is then generated and returned.
-    
-    @param name: application name without extension used as filename root.
-    @param path: the absolute path of the current application.
-    @param ext: the extension of the file, in the form '.xxx'
-    @param pathgiven: the path string given as alternative to the default.
+
+    Args:
+        basename (string): basename without extension, usually the application name
+        absdirpath (string): the absolute path of the current application
+        ext (string): the extension of the file, in the form '.xxx'. i.e. with the dot
+        pathgiven (string): the path given as alternative to the default, optional
+    Returns:
+        string: a full absolute path
     '''
-    dfltname = ''.join((name, ext))
+    dfltname = ''.join((basename, ext))
     if pathgiven == '':
-        filepath = os.path.join(path, dfltname)
+        filepath = os.path.join(absdirpath, dfltname)
     else:
         dirname, filename = os.path.split(pathgiven.strip())
-        if dirname !='': dirname = os.path.normpath(dirname)
+        if dirname != '': dirname = os.path.normpath(dirname)
         if filename == '': filename = dfltname
-        if dirname == '': dirname = path
-        elif not os.path.isabs(dirname): dirname = os.path.join(path, dirname)
+        if dirname == '': dirname = absdirpath
+        elif not os.path.isabs(dirname): dirname = os.path.join(absdirpath, dirname)
         filepath = os.path.join(dirname, filename)
     return filepath
 
-if (__name__ == '__main__'):
+if __name__ == '__main__':
     print 'Test1 -----------------------'
     print generatefilepath('zork', 'C:\\Users\\Paolo\\Test', '.conf', 'data/')
     print 'Test2 -----------------------'

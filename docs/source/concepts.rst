@@ -43,7 +43,7 @@ Four characteristics are usually considered:
 - the **function** of the device: lighting, security, audio-video, etc;
 - its **location**;
 - its **gateway**: which application is managing that device, if any;
-- the name of the **device**
+- the name of the **device**.
 
 In our example, a MQTT view shows how those four characteristics
 define all the devices in the network. The 2 gateways are also added.
@@ -57,12 +57,11 @@ Some considerations about those four characteristics:
 
 - not all four characteristics need to be provided to address succesfully
   a device;
-- any device can have more than one value for each characteristics; while
-  it is improbable for the **gateway** and **location** characteristics
-  to have more than one value, it is a possibility for the **function**
-  and **device** ones; 
-- the **device** name can be generic (e.g. *spotlight*) or specific and unique
-  within the network (e.g. *l1224*); in the generic case, obviously
+- any device can have more than one value for each characteristics,
+  particularly the **function**  and **device** ones (it is likely
+  for the **gateway** and **location** characteristics);
+- the **device** name can be generic (e.g. ``spotlight``) or specific and unique
+  within the network (e.g. ``lightid1224``); in the generic case, obviously
   other characteristics are needed to address the device.
 - the **location** is important and probably the most intuitive characteristic
   of all; preferably it should represent the place where the device

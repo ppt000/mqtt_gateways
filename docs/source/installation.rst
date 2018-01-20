@@ -107,33 +107,22 @@ Thereafter it only outputs errors, if any, so if nothing happens
 it is a good sign.  More information can be found in the log file,
 which in our case is located inside the ``data`` directory, as long
 as the configuration file has been used *as is*.
-Let the process run a minute or so, then stop it (type ``Ctrl-C``
-for example) and check the log file.  It should start with a banner
+Let the process run a minute or so and check the log file.
+It should start with a banner
 message to indicate the application has started, then a list of the
 full configuration used.  Logs from previous runs are kept so make sure
 to 'start from the end' of the file to read the latest logs.
-If the MQTT connection is succesfull it should say so as well as
+If the MQTT connection is successful it should say so as well as
 displaying the topics to which the application has subscribed.
 Thereafter, there should be some ``DEBUG`` level logs to indicate
-the messages sent and received, if any (there should be none at this stage).
+the messages received, if any (there should be none at this stage).
 
-For more details on 
-
-First run
+First Run
 *********
 
-Launch again the application in the background (same as before
-with an ``&`` at the end), and watch the log file:
-
-.. code-block:: none
-
-	python -m mqtt_gateways.dummy.dummy2mqtt data/ &
-	tail -f mqtt_gateways/dummy/data/dummy2mqtt.log
-
 After the start-up phase, the **dummy** interface logs (at a DEBUG level)
-any MQTT it receives and emits a unique message every 30 seconds.
-Watch the messages being sent periodically from the logs.
-Start your favourite MQTT monitor app (I use
+any MQTT messages it receives and emits a unique message every 30 seconds.
+Start your favourite MQTT monitor app (I use the excellent
 `mqtt-spy <https://kamilfb.github.io/mqtt-spy/>`_).
 Connect to your MQTT broker and subscribe to the topic:
 
@@ -161,18 +150,22 @@ The mapping data is the link between MQTT and the internal language of the inter
 It maps every keyword in the MQTT vocabulary into the equivalent keyword in the interface.
 This mapping is a very simple one-to-one relationship for every keyword, and its use is only
 to isolate the internal code from any changes in the MQTT vocabulary.
-For the *dummy* interface, the mapping data is provided by the text file
+For the **dummy** interface, the mapping data is provided by the text file
 ``dummy2mqtt.map`` in the ``data`` folder.  It's just there as a template, as,
-once again, the *dummy* interface really doesn't do anything.
+once again, the **dummy** interface really doesn't do anything.
 Note that the map file also contains the topics that the interface should
 subscribe to.
 
-Further Considerations
-**********************
+.. For more details on (to be completed for running the app as a service).
 
-Other ways of installing this framework, as a library for example,
-might be implemented later if necessary.
-The ``setup.py`` file
-is only there for reference.  It has not been tested, but it seems that at least
-**readthedocs.org** is using it succesfully - it doesn't prove it works though.
-Posting the project on PyPI should come at a later stage.
+
+.. the following section is removed for now
+	Further Considerations
+	**********************
+	
+	Other ways of installing this framework, as a library for example,
+	might be implemented later if necessary.
+	The ``setup.py`` file
+	is only there for reference.  It has not been tested, but it seems that at least
+	**readthedocs.org** is using it succesfully - it doesn't prove it works though.
+	Posting the project on PyPI should come at a later stage.

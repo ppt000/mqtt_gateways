@@ -4,8 +4,8 @@ representation of messages and the MQTT representation.
 
 It defines 2 classes:
 
-- :class:`internalMsg` is the internal representation of a message
-- :class:`msgMap` is the conversion engine between the internal
+- :class:`InternalMsg` is the internal representation of a message
+- :class:`MsgMap` is the conversion engine between the internal
   representation and the MQTT one.
 
 As a reminder, we define the MQTT syntax as follows:
@@ -16,25 +16,27 @@ As a reminder, we define the MQTT syntax as follows:
 
 ..
     TODO: change empty strings assignment with None
+    TODO: introduce the 'root' parameter for the MQTT root
 '''
 
 import logging
-import paho.mqtt.client as mqtt
 import os.path
 
-''' Indices for the list of dictionaries '''
+import paho.mqtt.client as mqtt
+
 _MQTT2INTERNAL = 0
 _INTERNAL2MQTT = 1
+''' Indices for the list of dictionaries'''
 
 _UNDEFINED = 'undefined'
 '''string: default name for an empty characteristic'''
 
-class internalMsg(object):
+class InternalMsg(object):
     '''
     Defines all the characteristics of an internal message.
-    
+
     Despite all the defaults, for the message to make sense:
-    
+
     - the action parameter should be provided,
     - the location or the device should be provided as well.
 
@@ -45,36 +47,36 @@ class internalMsg(object):
         location (string): internal representation of location, optional
         device (string): internal representation of device, optional
         action (string): internal representation of action, optional
-        arguments (dictionary of strings): all values should be assumed to be strings, even if numeric, optional
-    
+        arguments (dictionary of strings): all values should be assumed to be strings, optional
+
     '''
 
-    def __init__(self, iscmd = False, function='', gateway = '',
-                 location='', device = '', action='', arguments= {}):
-
+    def __init__(self, iscmd=False, function='', gateway='',
+                 location='', device='', action='', arguments=None):
         self.iscmd = iscmd
         self.function = function
         self.gateway = gateway
         self.location = location
         self.device = device
         self.action = action
-        self.arguments = arguments
-        
+        if arguments is None: self.arguments = {}
+        else: self.arguments = arguments
+
     def str(self):
         '''Helper function to stringify the class attributes.
         '''
-        return ''.join(('cmd=',str(self.iscmd),
-                        ';function=',self.function,
-                        ';gateway=',self.gateway,
-                        ';location=',self.location,
-                        ';device=',self.device,
-                        ';action=',self.action
-                        ))
+        return ''.join(('cmd=', str(self.iscmd),
+                        ';function=', self.function,
+                        ';gateway=', self.gateway,
+                        ';location=', self.location,
+                        ';device=', self.device,
+                        ';action=', self.action
+                       ))
 
-class msgMap(object):
+class MsgMap(object):
     '''
     Contains the mapping data and the conversion methods.
-    
+
     Initialises the 5 maps from the argument ``mapdata``,
     which is an object that must be readable line by line with a simple iterator.
     The syntax for ``mapdata`` is that each line has to start with
@@ -89,40 +91,36 @@ class msgMap(object):
         mapdata (a StringIO object or similar): contains the map data in the agreed format
         fullpath (string): the full path of the application root
 
-    .. TODO: all attributes are actually private, change their name
-
     '''
 
-    def __init__(self, mapdata, fullpath = None):
+    def __init__(self, mapdata, fullpath=None):
         if fullpath is None: # create NullHandler as the root name is not known
             self.logger = logging.getLogger(__name__)
             self.logger.addHandler(logging.NullHandler())
+            self.appname = _UNDEFINED   # for the MQTT topic source
         else: # hook up to the 'root' logger
-            rootname = os.path.splitext(os.path.basename(fullpath))[0] # first part of the filename, without extension
-            self._logger = logging.getLogger(''.join((rootname,".",__name__)))
-        
-        self.logger.debug(''.join(('Module <',__name__,'> started.')))
-        
+            # first part of the filename, without extension
+            self.appname = os.path.splitext(os.path.basename(fullpath))[0]
+            self._logger = logging.getLogger(''.join((self.appname, ".", __name__)))
+
+        self.logger.debug(''.join(('Module <', __name__, '> started.')))
+
         self.topics = []
         '''list of strings: the list of topics to subscribe to'''
-        self.msglist_in=[]
-        '''list of internalMsg objects: list of incoming messages '''
-        self.msglist_out = []
-        '''list of internalMsg objects: list of outgoing messages '''
         # The maps are pairs of dictionaries: [0] = MQTT -> Internal, [1] = Internal -> MQTT.
-        self._functionMap = [{},{}]
-        '''pair of dictionaries as in [{},{}]: contains the mapping data for the **function** characteristic
+        self._function_map = [{}, {}]
+        '''pair of dictionaries: contains the mapping data for the **function** characteristic.
                 the first dictionary relate MQTT keywords to internal keywords;
                 the second one is the inverse.'''
-        self._gatewayMap = [{},{}] # unused for now
+        self._gateway_map = [{}, {}] # unused for now
         '''same for the **gateway** characteristic'''
-        self._locationMap = [{},{}]
+        self._location_map = [{}, {}]
         '''same for the **location** characteristic'''
-        self._deviceMap = [{},{}]
+        self._device_map = [{}, {}]
         '''same for the **device** characteristic'''
-        self._actionMap = [{},{}]
+        self._action_map = [{}, {}]
         '''same for the **action** characteristic'''
-               
+
         for line in mapdata.splitlines():
             try:
                 tokens = line.rstrip().split(':')
@@ -130,36 +128,38 @@ class msgMap(object):
                 if  tokens[0] == 'topic':
                     self.topics.append(items[0])
                 elif tokens[0] == 'function':
-                    self._functionMap[_MQTT2INTERNAL][items[0]]=items[1]
-                    self._functionMap[_INTERNAL2MQTT][items[1]]=items[0]
+                    self._function_map[_MQTT2INTERNAL][items[0]] = items[1]
+                    self._function_map[_INTERNAL2MQTT][items[1]] = items[0]
                 elif tokens[0] == 'gateway':
-                    self._gatewayMap[_MQTT2INTERNAL][items[0]]=items[1]
-                    self._gatewayMap[_INTERNAL2MQTT][items[1]]=items[0]
+                    self._gateway_map[_MQTT2INTERNAL][items[0]] = items[1]
+                    self._gateway_map[_INTERNAL2MQTT][items[1]] = items[0]
                 elif tokens[0] == 'location':
-                    self._locationMap[_MQTT2INTERNAL][items[0]]=items[1]
-                    self._locationMap[_INTERNAL2MQTT][items[1]]=items[0]
+                    self._location_map[_MQTT2INTERNAL][items[0]] = items[1]
+                    self._location_map[_INTERNAL2MQTT][items[1]] = items[0]
                 elif tokens[0] == 'device':
-                    self._deviceMap[_MQTT2INTERNAL][items[0]]=items[1]
-                    self._deviceMap[_INTERNAL2MQTT][items[1]]=items[0]
+                    self._device_map[_MQTT2INTERNAL][items[0]] = items[1]
+                    self._device_map[_INTERNAL2MQTT][items[1]] = items[0]
                 elif tokens[0] == 'action':
-                    self._actionMap[_MQTT2INTERNAL][items[0]]=items[1]
-                    self._actionMap[_INTERNAL2MQTT][items[1]]=items[0]
+                    self._action_map[_MQTT2INTERNAL][items[0]] = items[1]
+                    self._action_map[_INTERNAL2MQTT][items[1]] = items[0]
                 else:
-                    self.logger.info(''.join(('Unrecognised token in line <',line,'> in map data, skip the line.')))
+                    self.logger.info(''.join(('Unrecognised token in line <', line,
+                                              '> in map data, skip the line.')))
             except IndexError:
-                self.logger.info(''.join(('Incorrect line <',line,'> in map data, skip the line.')))
-        
-    def MQTT2Internal(self, mqttMsg):
+                self.logger.info(''.join(('Incorrect line <', line,
+                                          '> in map data, skip the line.')))
+
+    def mqtt2internal(self, mqtt_msg):
         '''
         Converts the MQTT message into an internal one.
 
         Args:
-            mqttMsg (string): a fully formed MQTT message, valid for this gateway,
+            mqtt_msg (string): a fully formed MQTT message, valid for this gateway,
                 i.e. in the form ``root/function/gateway/location/device/source/type{C or S}``
 
         Returns:
-            internalMsg object: the conversion of the MQTT message
-        
+            InternalMsg object: the conversion of the MQTT message
+
         Raises:
             ValueError: in case of bad MQTT syntax or unrecognised map elements
 
@@ -167,150 +167,156 @@ class msgMap(object):
             TODO: the assignments relating to the payload all go through an str()
             function call just in case they are considered numbers, but I am not
             sure if it is really necessary.
-        
+
         '''
-        tokens = mqttMsg.topic.split('/')
+        tokens = mqtt_msg.topic.split('/')
         if len(tokens) != 7:
-            raise ValueError(''.join(('Topic <', mqttMsg.topic,'> has not the right number of tokens.')))
-        
+            raise ValueError(''.join(('Topic <', mqtt_msg.topic,
+                                      '> has not the right number of tokens.')))
+
         # Check here function or gateway, but they are probably filtered by the topic subscription
-        
+
         if tokens[6] == 'S': iscmd = False
         elif tokens[6] == 'C': iscmd = True
         else:
-            raise ValueError(''.join(('Type in topic <', mqttMsg.topic,'> not recognised.')))
+            raise ValueError(''.join(('Type in topic <', mqtt_msg.topic, '> not recognised.')))
 
-        try: location = self._locationMap[_MQTT2INTERNAL][tokens[3]]
+        try: location = self._location_map[_MQTT2INTERNAL][tokens[3]]
         except KeyError: location = ''
-        try: device = self._deviceMap[_MQTT2INTERNAL][tokens[4]]
+        try: device = self._device_map[_MQTT2INTERNAL][tokens[4]]
         except KeyError: device = ''
         if (location == '') and (device == ''):
-            raise ValueError(''.join(('MQTT location <', tokens[3],'> and device <', tokens[4],'> unrecognised.')))
+            raise ValueError(''.join(('MQTT location <', tokens[3], '> and device <',
+                                      tokens[4], '> unrecognised.')))
 
-        try: function = self._functionMap[_MQTT2INTERNAL][tokens[1]]
+        try: function = self._function_map[_MQTT2INTERNAL][tokens[1]]
         except KeyError: function = ''
 
-        try: gateway = self._gatewayMap[_MQTT2INTERNAL][tokens[2]]
+        try: gateway = self._gateway_map[_MQTT2INTERNAL][tokens[2]]
         except KeyError: gateway = ''
-        
+
         args = {}
-        # the payload syntax is a query string 'key1=value1&key2=value2&...' if there is more than one argument
-        if '&' in mqttMsg.payload: # there is more than one argument in this payload
+        # the payload syntax is a query string 'key1=value1&key2=value2&...' if...
+        # ...there is more than one argument
+        if '&' in mqtt_msg.payload: # there is more than one argument in this payload
             mqtt_action = '' # just in case there is no 'action' in the list of arguments
-            for token in mqttMsg.payload.split('&'):
+            for token in mqtt_msg.payload.split('&'):
                 argument = token.split('=')
                 if len(argument) != 2:
-                    raise ValueError(''.join(('Bad format for payload <', mqttMsg.payload,'>')))
-                if argument[0]=='action':
+                    raise ValueError(''.join(('Bad format for payload <', mqtt_msg.payload, '>')))
+                if argument[0] == 'action':
                     mqtt_action = str(argument[1])
                 else:
                     args[argument[0]] = str(argument[1])
-        else: # this is a straightforward action 
-            mqtt_action = str(mqttMsg.payload)
+        else: # this is a straightforward action
+            mqtt_action = str(mqtt_msg.payload)
         try:
-            action = self._actionMap[_MQTT2INTERNAL][mqtt_action]
+            action = self._action_map[_MQTT2INTERNAL][mqtt_action]
         except KeyError:
-            raise ValueError(''.join(('MQTT action <',mqtt_action,'> unrecognised.')))
-        
-        return internalMsg(iscmd= iscmd,
-                           function= function,
-                           gateway = gateway,
-                           location= location,
-                           action= action,
-                           device= device,
-                           arguments= args)
+            raise ValueError(''.join(('MQTT action <', mqtt_action, '> unrecognised.')))
 
-    def Internal2MQTT(self, iMsg):
+        return InternalMsg(iscmd=iscmd,
+                           function=function,
+                           gateway=gateway,
+                           location=location,
+                           action=action,
+                           device=device,
+                           arguments=args)
+
+    def internal2mqtt(self, internal_msg):
         '''
         Converts an internal message into a MQTT one.
-        
+
         In cases where a characteristic is *empty* (i.e. it is ``''`` or
         equal to an ``_UNDEFINED`` constant) then ``_UNDEFINED``
         is used in the MQTT message.
-        In all cases of unsuccesful conversion of an optional characteristic
+        In all cases of unsuccessful conversion of an optional characteristic
         (i.e. there is a string in the field not equal to ``_UNDEFINED``),
-        then ``_UNDEFINED`` is also used in the MQTT message, but the 
+        then ``_UNDEFINED`` is also used in the MQTT message, but the
         conversion failure is logged just in case there is a
         typo in one of the maps.
-        
+
         Args:
-            iMsg (an :class:internalMsg object): the message to convert
-        
+            internal_msg (an InternalMsg object): the message to convert
+
         Returns:
-            a MQTTMessage object: syntax is ``root/function/gateway/location/device/source/{C or S}``
-            
+            a MQTTMessage object: a full MQTT message where topic syntax is
+            ``root/function/gateway/location/device/source/{C or S}`` and
+            payload syntax is either a plain action or a query string.
+
         Raises:
             ValueError: in case both location and device are not found, or
                 the action can not be converted.
         '''
-        if iMsg.location == '' or iMsg.location == _UNDEFINED:
+        if internal_msg.location == '' or internal_msg.location == _UNDEFINED:
             mqtt_location = _UNDEFINED
             locfound = False
         else:
             try:
-                mqtt_location = self._locationMap[_INTERNAL2MQTT][iMsg.location]
+                mqtt_location = self._location_map[_INTERNAL2MQTT][internal_msg.location]
                 locfound = True
             except KeyError:
                 mqtt_location = _UNDEFINED
                 locfound = False
-                self.logger.info(''.join(('Location <',iMsg.location,'> unrecognised.')))
+                self.logger.info(''.join(('Location <', internal_msg.location, '> unrecognised.')))
 
-        if iMsg.device == '' or iMsg.device == _UNDEFINED:
+        if internal_msg.device == '' or internal_msg.device == _UNDEFINED:
             mqtt_device = _UNDEFINED
             devfound = False
         else:
             try:
-                mqtt_device = self._deviceMap[_INTERNAL2MQTT][iMsg.device]
+                mqtt_device = self._device_map[_INTERNAL2MQTT][internal_msg.device]
                 devfound = True
             except KeyError:
                 mqtt_device = _UNDEFINED
                 devfound = False
-                self.logger.info(''.join(('Device <',iMsg.device,'> unrecognised.')))
+                self.logger.info(''.join(('Device <', internal_msg.device, '> unrecognised.')))
 
         if (not locfound) and (not devfound):
-            raise ValueError(''.join(('Both location <',str(iMsg.location),'> and device <',str(iMsg.device),'> are unusable.')))
-        
-        if iMsg.function == '' or iMsg.function == _UNDEFINED:
+            raise ValueError(''.join(('Both location <', str(internal_msg.location), '> and device <',
+                                      str(internal_msg.device), '> are unusable.')))
+
+        if internal_msg.function == '' or internal_msg.function == _UNDEFINED:
             mqtt_function = _UNDEFINED
         else:
             try:
-                mqtt_function = self._functionMap[_INTERNAL2MQTT][iMsg.function]
+                mqtt_function = self._function_map[_INTERNAL2MQTT][internal_msg.function]
             except KeyError:
                 mqtt_function = _UNDEFINED
-                self.logger.info(''.join(('Function <',iMsg.function,'> not recognised.')))
+                self.logger.info(''.join(('Function <', internal_msg.function, '> not recognised.')))
 
-        if iMsg.gateway == '' or iMsg.gateway == _UNDEFINED:
+        if internal_msg.gateway == '' or internal_msg.gateway == _UNDEFINED:
             mqtt_gateway = _UNDEFINED
         else:
             try:
-                mqtt_gateway = self._gatewayMap[_INTERNAL2MQTT][iMsg.gateway]
+                mqtt_gateway = self._gateway_map[_INTERNAL2MQTT][internal_msg.gateway]
             except KeyError:
                 mqtt_gateway = _UNDEFINED
-                self.logger.info(''.join(('Gateway <',iMsg.gateway,'> not recognised.')))
-                
+                self.logger.info(''.join(('Gateway <', internal_msg.gateway, '> not recognised.')))
+
         # Include here treatment to generate topic
-        topic = ''.join(('oer/',
-                         mqtt_function,'/',
-                         mqtt_gateway,'/',
-                         mqtt_location,'/',
-                         mqtt_device,'/',
-                         'cbus/',
-                         'C' if iMsg.iscmd else 'S'))
+        topic = ''.join(('home/',
+                         mqtt_function, '/',
+                         mqtt_gateway, '/',
+                         mqtt_location, '/',
+                         mqtt_device, '/',
+                         self.appname, '/',
+                         'C' if internal_msg.iscmd else 'S'))
 
         try:
-            mqtt_action = self._actionMap[_INTERNAL2MQTT][iMsg.action]
+            mqtt_action = self._action_map[_INTERNAL2MQTT][internal_msg.action]
         except KeyError:
-            raise ValueError(''.join(('Action <',iMsg.action,'> not recognised.')))
-        
+            raise ValueError(''.join(('Action <', internal_msg.action, '> not recognised.')))
+
         # Generate payload
-        if len(iMsg.arguments) == 0: # no arguments, just publish the action text on its own
+        if not internal_msg.arguments: # no arguments, just publish the action text on its own
             payload = mqtt_action
         else: # there are arguments, publish a query string
-            stringlist = ['action=',mqtt_action]
-            for arg in iMsg.arguments:
-                stringlist.extend(['&',arg,'=',iMsg.arguments[arg]])
+            stringlist = ['action=', mqtt_action]
+            for arg in internal_msg.arguments:
+                stringlist.extend(['&', arg, '=', internal_msg.arguments[arg]])
             payload = ''.join(stringlist)
 
-        mqttMsg = mqtt.MQTTMessage()
-        mqttMsg.topic = topic; mqttMsg.payload = payload; mqttMsg.qos = 0; mqttMsg.retain = False;
-        return mqttMsg
+        mqtt_msg = mqtt.MQTTMessage()
+        mqtt_msg.topic = topic; mqtt_msg.payload = payload; mqtt_msg.qos = 0; mqtt_msg.retain = False
+        return mqtt_msg

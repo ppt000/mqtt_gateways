@@ -25,9 +25,9 @@ keepalive: 60
 # This is the timeout of the 'loop()' call in the mqtt library
 timeout: 0.01
 # The reconnection is attempted every 'reconnect_delay' seconds
-reconnect_delay: 30
+#reconnect_delay: 30
 # Maximum number of reconnection attempts
-max_reconnect_attempts: 120
+#max_reconnect_attempts: 120
 # Map file. Default name is <*application_name*.map>.
 mapfilename: data/
 [LOG]
@@ -50,4 +50,3 @@ address: me@example.com
 #   - use forward slashes '/' in any case, even for Windows systems, it should work;
 #   - however for Windows systems, use of the drive letter might be an issue and has not been tested.
 '''
-
