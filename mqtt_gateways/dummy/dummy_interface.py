@@ -66,7 +66,7 @@ class DummyInterface(object):
             self._logger.critical(''.join(('Module ', __name__, ' could not start.\n', errormsg)))
             raise KeyError(errormsg)
         # optional success message
-        self._logger.debug(''.join(('Parameter "port" succesfully updated with value <',
+        self._logger.debug(''.join(('Parameter "port" successfully updated with value <',
                                     port, '>')))
         # *** INITIATE YOUR INTERFACE HERE ***
 

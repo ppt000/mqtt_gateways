@@ -41,9 +41,10 @@ class ThrottledException(Exception):
     # the start value of _timer ensures that the first error is logged
     def __init__(self, msg=None, throttlelag=_THROTTLELAG, module_name=None):
         self.msg = msg
+        self.trigger = False
+        self.report = ''
         if module_name is None: modulestring = ''
         else: modulestring = ''.join((' in module ', module_name))
-        self.trigger = False
         now = time.time()
         lag = now - ThrottledException._timer
         if lag > throttlelag:

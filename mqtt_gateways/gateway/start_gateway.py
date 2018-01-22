@@ -33,6 +33,7 @@ _THROTTLELAG = 600  #int: lag in seconds to throttle the error logs.
 _IN = 0; _OUT = 1 # indices for the message lists
 
 class MQTTConnectionError(ThrottledException):
+    # pylint: disable=too-few-public-methods
     ''' Base Exception class for this module, inherits from ThrottledException'''
     def __init__(self, msg=None):
         super(MQTTConnectionError, self).__init__(msg, throttlelag=_THROTTLELAG, module_name=__name__)
@@ -47,7 +48,7 @@ class MQTTConnectionError(ThrottledException):
 #===============================================================================
 
 def on_connect(client, userdata, flags, return_code):
-    # pylint: disable=W0613
+    # pylint: disable=unused-argument
     '''
     The MQTT callback when a connection is established.
 
@@ -66,7 +67,7 @@ def on_connect(client, userdata, flags, return_code):
         logger.debug(''.join(('Subscribing to topic <', topic, '>.')))
 
 def on_disconnect(client, userdata, return_code):
-    # pylint: disable=W0613
+    # pylint: disable=unused-argument
     '''
     The MQTT callback when a disconnection occurs.
 
@@ -79,7 +80,7 @@ def on_disconnect(client, userdata, return_code):
     userdata['connected'] = False
 
 def on_message(client, userdata, mqtt_msg):
-    # pylint: disable=W0613
+    # pylint: disable=unused-argument
     '''
     The MQTT callback when a message is received from the MQTT broker.
 
@@ -94,7 +95,7 @@ def on_message(client, userdata, mqtt_msg):
     except ValueError as err:
         logger.info(str(err))
         return
-    msgl = userdata['msglist']
+    msgl = userdata['msglists']
     msgl[_IN].append(internal_msg)
 
 def startgateway(gateway_interface, fullpath=None):
@@ -178,9 +179,9 @@ def startgateway(gateway_interface, fullpath=None):
     interfaceparams = {} # the parameters for the interface from the configuration file
     for option in cfg.options('INTERFACE'): # read the configuration parameters in a dictionary
         interfaceparams[option] = str(cfg.get('INTERFACE', option))
-    msglist = [[], []] # pair of message lists
+    msglists = [[], []] # pair of message lists
     gatewayinterface = gateway_interface(interfaceparams,
-                                         msglist,
+                                         msglists,
                                          fullpath)
     # Load the map data.
     mapfilepath = generatefilepath(app_name, '.map', app_path, cfg.get('MQTT', 'mapfilename'))
@@ -195,7 +196,7 @@ def startgateway(gateway_interface, fullpath=None):
     localdata['connected'] = False #  boolean to indicate connection, to be set in the callbacks
     localdata['timeout'] = cfg.getfloat('MQTT', 'timeout') # for the mqtt loop() method
     localdata['msgmap'] = messagemap
-    localdata['msglist'] = msglist
+    localdata['msglists'] = msglists
     localdata['logger'] = logger
     localdata['interface'] = gatewayinterface
     # Initialise the MQTT client and connect.
@@ -228,7 +229,7 @@ def startgateway(gateway_interface, fullpath=None):
         gatewayinterface.loop()
         # Publish the messages returned, if any.
         while True:
-            try: internal_msg = msglist[_OUT].pop(0) # send messages on a FIFO basis
+            try: internal_msg = msglists[_OUT].pop(0) # send messages on a FIFO basis
             except IndexError: break
             try: mqtt_msg = messagemap.internal2mqtt(internal_msg)
             except ValueError as err:

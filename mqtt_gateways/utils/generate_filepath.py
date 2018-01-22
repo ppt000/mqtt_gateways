@@ -12,7 +12,7 @@ def generatefilepath(basename, ext, absdirpath, pathgiven):
     to a file based on default arguments, with some basic rules.
     There are 3 'default' arguments: the basename of the file,
     the extension of the file, and an absolute path.
-    
+
     from a range of possible
     scenarios. It takes 4 arguments, 3 of them to generate defaults and the last
     one to suggest alternatives from the user. If no alternative from the user

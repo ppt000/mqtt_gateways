@@ -16,3 +16,4 @@ Subpackages
 
     mqtt_gateways.dummy
     mqtt_gateways.gateway
+    mqtt_gateways.utils
