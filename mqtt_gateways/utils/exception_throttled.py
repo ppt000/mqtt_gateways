@@ -32,7 +32,7 @@ class ThrottledException(Exception):
 
     Args:
         msg (string): the error message, as for usual exceptions, optional
-        throttlelag (int): the lag time while errors should be throttles, optional
+        throttlelag (int): the lag time in seconds while errors should be throttled, optional
         module_name (string): the calling module to give extra information, optional
 
     '''

@@ -1,14 +1,10 @@
 '''
-Created on 1 May 2017
-
 Function to initialise the 'root' logger with pre-defined handlers.
 
-@author: PierPaolo
-
-Usage:
-# Use the name of the application as 'module_name':
-logger = logging.getLogger('module_name')
-init_logger.initlogger(logger, 'module_name' , filepath, [log_debug])
+Usage::
+    # Use the name of the application as 'module_name':
+    logger = logging.getLogger('module_name')
+    init_logger.initlogger(logger, 'module_name' , filepath, [log_debug])
 
 '''
 
@@ -23,32 +19,30 @@ def initlogger(logger, log_id, log_filepath=None, log_debug=False,
     the following handlers:
 
     - the standard 'Stream' handler will always log level ERROR and above;
-    this should send those messages to the console output, the syslog and/or
-    journald, depending on how the application is being launched;
-
     - a rotating file handler, with fixed parameters (max 50kB, 3 rollover
-    files); the level for this handler is DEBUG if the parameter 'log_debug' is
-    True, INFO otherwise; the file name for this log is given by the
-    log_filepath parameter which is used as is; an error message is logged in
-    the standard handler if there was a problem creating the file;
-
+      files); the level for this handler is DEBUG if the parameter 'log_debug' is
+      True, INFO otherwise; the file name for this log is given by the
+      log_filepath parameter which is used as is; an error message is logged in
+      the standard handler if there was a problem creating the file;
     - an email handler with the level set to ERROR;
 
-    @param logger: the actual logger object to be initialised; don't call
-    getLogger otherwise it will not be a 'root' logger.
-    @param log_id: a string to identify the logger. Ideally the name of the
-    current module.
-    @param log_filepath: the debug/info log file path; the path is used 'as is',
-    if it is relative, no guarantee is made of where it actually points to.
-    @param log_debug: a flag to indicate if DEBUG logging is required, or only
-    INFO.
-    @param email_host: host of the email server in the form of a tuple (host, port)
-    @param email_address: email address where to send the messages.
+    Args:
+        logger: the actual logger object to be initialised;
+        log_id (string): identifies the logger, ideally the name of the
+            calling module;
+        log_filepath (string): the log file path, used 'as is';
+            if it is relative, no guarantee is made of where it actually points to;
+        log_debug (boolean): a flag to indicate if DEBUG logging is required, or only
+            INFO;
+        email_host (string): host of the email server in the form of a tuple (host, port);
+        email_address (string): email address where to send the messages.
 
-    @return: nothing
+    Returns:
+        Nothing
 
-    @errors: any IOErrors thrown by file handling methods are caught, but smtp
-    methods might produce exceptions that are not caught for now.
+    Raises:
+        any IOErrors thrown by file handling methods are caught, but smtp
+        methods might produce exceptions that are not caught for now.
     '''
     logger.setLevel(logging.DEBUG if log_debug else logging.INFO)
     #===========================================================================

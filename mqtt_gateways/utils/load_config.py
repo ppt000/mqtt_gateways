@@ -1,9 +1,6 @@
 '''
-Created on 29 Apr 2017
-
 Function to facilitate the loading of configuration parameters.
-
-@author: PierPaolo
+Based on ConfigParser.
 '''
 
 import ConfigParser
@@ -16,7 +13,7 @@ def loadconfig(cfg_dflt_string, cfg_filepath):
     and the following convention.
 
     The default configuration is represented by the string passed as argument
-    'cfg_dflt_string'. This string is expected to have all the necessary
+    ``cfg_dflt_string``. This string is expected to have all the necessary
     sections and options that the application will need, with their default
     values.  All options need to be listed there, even the ones that HAVE to be
     updated and have no default value.  This default configuration will be
@@ -26,24 +23,30 @@ def loadconfig(cfg_dflt_string, cfg_filepath):
     The function 'loads' this default configuration, then checks if the
     configuration file is available, and if found it grabs only the values from
     the file that are also present in the default configuration.  Anything else
-    in the file is not considered. The result is a configuration object with all
+    in the file is not considered, except for the [INTERFACE] section (see below).
+    The result is a configuration object with all
     the necessary fields, updated by the file values if present, or with the
     default values if not. The application can therefore call all fields without
     index errors.
 
-    As an added feature, the function updates the option 'location' in the
+    The exception to the above process in the [INTERFACE] section.  The options
+    of this section will be loaded 'as is' in the Config object.  This section can be
+    used to define ad-hoc options that are not in the default configuration.
+    
+    Finally, the function updates the option 'location' in the
     section [CONFIG] with the full path of the configuration file used, just in
     case it is needed later.  However it only updates it if it was present in
     the default configuration string, in the spirit of the above convention.  It
     also 'logs' the error in the 'error' option of the same section, if any OS
     exception occurred while opening or reading the configuration file.
 
-    @param cfg_dflt_string: the string representing the default configuration.
-    @param cfg_filepath: the path of the configuration file; it is used 'as is'
-    and if it is relative there is no guarantee of where it will actually point.
-    @return: a ConfigParser.RawConfigParser object loaded with the parameters.
-    @errors: this function should not throw any known exceptions and returns a
-    default value in case of bad or unexpected arguments.
+    Args:
+        cfg_dflt_string (string): represents the default configuration.
+        cfg_filepath (string): the path of the configuration file; it is used 'as is'
+            and if it is relative there is no guarantee of where it will actually point.
+
+    Returns:
+        ConfigParser.RawConfigParser object: loaded with the parameters.
     '''
 
     # Load the default configuration

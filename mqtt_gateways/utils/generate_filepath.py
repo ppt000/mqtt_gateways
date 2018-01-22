@@ -6,28 +6,30 @@ import os.path
 
 def generatefilepath(basename, ext, absdirpath, pathgiven):
     '''
-    Generates the absolute path of a file.
+    Generates the full absolute path of a file.
 
-    This function takes a path as argument and builds an absolute path
-    to a file based on default arguments, with some basic rules.
-    There are 3 'default' arguments: the basename of the file,
-    the extension of the file, and an absolute path.
+    This function builds an absolute path to a file based on 3 'default' arguments
+    (the basename of the file, the extension of the file, and an absolute path) and
+    an extra argument that represents a valid path.
+    Depending on what represents this path (a directory, a file, an absolute or a 
+    relative reference) the function will generate a full absolute path, relying on the
+    'default' parameters if and when necessary.
+    The generation of the full path follows those rules:
 
-    from a range of possible
-    scenarios. It takes 4 arguments, 3 of them to generate defaults and the last
-    one to suggest alternatives from the user. If no alternative from the user
-    is provided, the function simply returns the default absolute path with the
-    correct extension. If an alternative is provided it could be one of 4 cases,
-    depending if the directory path is absolute or relative, and if a filename
-    at the end is provided or not. If the path is relative, the application path
-    is prepended. If the filename is missing, the default basename is provided. The
-    full absolute path is then generated and returned.
+        - the default name is made of the default basename and the default extension;
+        - if the path given is empty, then the full path is the default absolute path
+          with the default filename;
+        - if the path given contains a filename at the end, this is the filename to be used;
+        - if the path given contains an absolute path at the beginning, that is the
+          absolute path that will be used;
+        - if the path given contains only a relative path at the beginning, then
+          the default absolute path will be prepended to the path given. 
 
     Args:
         basename (string): basename without extension, usually the application name
         absdirpath (string): the absolute path of the current application
         ext (string): the extension of the file, in the form '.xxx'. i.e. with the dot
-        pathgiven (string): the path given as alternative to the default, optional
+        pathgiven (string): the path given as alternative to the default
     Returns:
         string: a full absolute path
     '''
