@@ -46,7 +46,7 @@ def loadconfig(cfg_dflt_string, cfg_filepath):
             and if it is relative there is no guarantee of where it will actually point.
 
     Returns:
-        ConfigParser.RawConfigParser object: loaded with the parameters.
+        ConfigParser.RawConfigParser object: object loaded with the parameters.
     '''
 
     # Load the default configuration

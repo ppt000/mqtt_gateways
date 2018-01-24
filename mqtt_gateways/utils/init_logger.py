@@ -2,6 +2,7 @@
 Function to initialise the 'root' logger with pre-defined handlers.
 
 Usage::
+
     # Use the name of the application as 'module_name':
     logger = logging.getLogger('module_name')
     init_logger.initlogger(logger, 'module_name' , filepath, [log_debug])
@@ -42,7 +43,7 @@ def initlogger(logger, log_id, log_filepath=None, log_debug=False,
 
     Raises:
         any IOErrors thrown by file handling methods are caught, but smtp
-        methods might produce exceptions that are not caught for now.
+            methods might produce exceptions that are not caught for now.
     '''
     logger.setLevel(logging.DEBUG if log_debug else logging.INFO)
     #===========================================================================

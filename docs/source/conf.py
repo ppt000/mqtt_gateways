@@ -38,6 +38,7 @@ extensions = [
     ,'sphinx.ext.napoleon'
     ]
 
+autodoc_member_order = 'bysource'
 #numpydoc_show_inherited_class_members = False
 #numpydoc_show_class_members = False
 #napoleon_use_param = True

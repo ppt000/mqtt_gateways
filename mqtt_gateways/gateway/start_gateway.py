@@ -32,11 +32,12 @@ from mqtt_gateways.gateway.configuration import CONFIG
 _THROTTLELAG = 600  #int: lag in seconds to throttle the error logs.
 _IN = 0; _OUT = 1 # indices for the message lists
 
+# pylint: disable=too-few-public-methods
 class MQTTConnectionError(ThrottledException):
-    # pylint: disable=too-few-public-methods
     ''' Base Exception class for this module, inherits from ThrottledException'''
     def __init__(self, msg=None):
         super(MQTTConnectionError, self).__init__(msg, throttlelag=_THROTTLELAG, module_name=__name__)
+# pylint: enable=too-few-public-methods
 
 #===============================================================================
 # The MQTT callbacks.
