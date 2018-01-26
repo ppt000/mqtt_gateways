@@ -26,17 +26,17 @@ from mqtt_gateways.utils.init_logger import initlogger
 from mqtt_gateways.utils.generate_filepath import generatefilepath
 from mqtt_gateways.utils.exception_throttled import ThrottledException
 
-from mqtt_gateways.gateway.mqtt_map import MsgMap
+from mqtt_gateways.gateway.mqtt_map import msgMap
 from mqtt_gateways.gateway.configuration import CONFIG
 
 _THROTTLELAG = 600  #int: lag in seconds to throttle the error logs.
 _IN = 0; _OUT = 1 # indices for the message lists
 
 # pylint: disable=too-few-public-methods
-class MQTTConnectionError(ThrottledException):
+class mqttConnectionError(ThrottledException):
     ''' Base Exception class for this module, inherits from ThrottledException'''
     def __init__(self, msg=None):
-        super(MQTTConnectionError, self).__init__(msg, throttlelag=_THROTTLELAG, module_name=__name__)
+        super(mqttConnectionError, self).__init__(msg, throttlelag=_THROTTLELAG, module_name=__name__)
 # pylint: enable=too-few-public-methods
 
 #===============================================================================
@@ -48,8 +48,9 @@ class MQTTConnectionError(ThrottledException):
 #   - the gateway interface instance
 #===============================================================================
 
+# pylint: disable=unused-argument
+
 def on_connect(client, userdata, flags, return_code):
-    # pylint: disable=unused-argument
     '''
     The MQTT callback when a connection is established.
 
@@ -68,7 +69,6 @@ def on_connect(client, userdata, flags, return_code):
         logger.debug(''.join(('Subscribing to topic <', topic, '>.')))
 
 def on_disconnect(client, userdata, return_code):
-    # pylint: disable=unused-argument
     '''
     The MQTT callback when a disconnection occurs.
 
@@ -81,7 +81,6 @@ def on_disconnect(client, userdata, return_code):
     userdata['connected'] = False
 
 def on_message(client, userdata, mqtt_msg):
-    # pylint: disable=unused-argument
     '''
     The MQTT callback when a message is received from the MQTT broker.
 
@@ -98,6 +97,8 @@ def on_message(client, userdata, mqtt_msg):
         return
     msgl = userdata['msglists']
     msgl[_IN].append(internal_msg)
+
+# pylint: enable=unused-argument
 
 def startgateway(gateway_interface, fullpath=None):
     '''
@@ -191,7 +192,7 @@ def startgateway(gateway_interface, fullpath=None):
             map_data = mapfile.read()
     except (OSError, IOError) as err:
         raise OSError(''.join(('Error <', str(err), '> with map file <', mapfilepath, '>.')))
-    messagemap = MsgMap(map_data)
+    messagemap = msgMap(map_data)
     # Initialise the dictionary to store parameters and to pass to the callbacks
     localdata = {}
     localdata['connected'] = False #  boolean to indicate connection, to be set in the callbacks
@@ -221,8 +222,8 @@ def startgateway(gateway_interface, fullpath=None):
     while True:
         # Deal with the situation where mqtt is not connected as the loop() method does not automatically reconnect.
         if not localdata['connected']:
-            try: raise MQTTConnectionError('Client can''t reconnect to broker.')
-            except MQTTConnectionError as err: # not very elegant but works
+            try: raise mqttConnectionError('Client can''t reconnect to broker.')
+            except mqttConnectionError as err: # not very elegant but works
                 if err.trigger: logger.critical(err.report)
         # Call the mqtt loop.
         mqttclient.loop(localdata['timeout'])

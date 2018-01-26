@@ -1,7 +1,7 @@
 '''
 The **dummy** interface class definition. Use it as a template.
 
-This module defines the class :class:`DummyInterface` that will be instantiated by the
+This module defines the class :class:`dummyInterface` that will be instantiated by the
 main gateway module.
 Any other code needed for the interface can be placed here or in other
 modules, as long as the necessary imports are included of course.
@@ -14,9 +14,9 @@ import os.path
 # only import this module for the example code in loop()
 import time
 
-from mqtt_gateways.gateway.mqtt_map import InternalMsg
+from mqtt_gateways.gateway.mqtt_map import internalMsg
 
-class DummyInterface(object):
+class dummyInterface(object):
     '''
     Doesn't do anything but provides a template.
 
@@ -33,17 +33,22 @@ class DummyInterface(object):
             entry in the dictionary. Use this to pass parameters from the configuration
             file to the interface, for example the name of a port, or the speed
             of a serial communication.
-        msgl (pair of lists of :class:`InternalMsg` objects): these lists
+        msgls (pair of lists of :class:`internalMsg` objects): these lists
             represent the communication *bus* with the core of the
-            application. The list ``msgl[0]`` contains the incoming messages to
-            process by this interface, and the list ``msgl[1]`` can be used to
+            application. The first list should contain the incoming messages to
+            process by this interface, and the second list can be used to
             send messages from this interface to the core application (and
             subsequently to the MQTT network).  The elements of these lists
-            should be instantiations of the :class:`InternalMsg` class.  Use the
-            method ``pop(0)`` to read the incoming list on a FIFO basis and
-            the method ``append(msg)`` to fill the outgoing list.
+            should be instantiations of the :class:`internalMsg` class.  Use the
+            method ``pop(0)`` to read the lists on a FIFO basis and
+            the method ``append(msg)`` to fill the lists.
             The constructor should assign these lists to a local attribute
             that the other methods of this class can use when needed.
+            It is strongly advised to *empty* the incoming list at the beginning of
+            the process.  The gateway will empty all messages of the outgoing
+            list and attempt to send them to the MQTT system.
+            The main reason to keep 2 lists instead of one is to simplify
+            sending statuses while processing incoming commands one by one.
         path (string): the full absolute path of the launcher script
             This path can be used to extract the name of the application
             or the directory where it is located.  It can be useful to
@@ -53,7 +58,7 @@ class DummyInterface(object):
 
     '''
 
-    def __init__(self, params, msgl, path):
+    def __init__(self, params, msgls, path):
         # use this logger to benefit from the handlers of the core application
         rootname = os.path.splitext(os.path.basename(path))[0] # first part of the filename
         self._logger = logging.getLogger(''.join((rootname, '.', __name__)))
@@ -71,8 +76,8 @@ class DummyInterface(object):
         # *** INITIATE YOUR INTERFACE HERE ***
 
         # Keep the message lists locally
-        self._msgin = msgl[0]
-        self._msgout = msgl[1]
+        self._msgl_in = msgls[0]
+        self._msgl_out = msgls[1]
 
         # initialise time for the example only
         self.time0 = time.time()
@@ -84,17 +89,18 @@ class DummyInterface(object):
         '''
         # example code to read the incoming messages list
         while True:
-            try: msg = self._msgin.pop(0) # read messages on a FIFO basis
+            try: msg = self._msgl_in.pop(0) # read messages on a FIFO basis
             except IndexError: break
             # do something with the message; here we log only
             self._logger.debug(''.join(('Message <', msg.str(), '> received.')))
         # example code to write in the outgoing messages list periodically
         timenow = time.time()
         if (timenow - self.time0) > 30: # every 30 seconds
-            msg = InternalMsg(iscmd=True,
+            msg = internalMsg(iscmd=True,
                               function='Lighting',
                               gateway='dummy',
                               location='Office',
                               action='LIGHT_ON')
-            self._msgout.append(msg)
+            self._msgl_out.append(msg)
             self.time0 = timenow
+            self._logger.debug(''.join(('Message <', msg.str(), '> queued to send.')))

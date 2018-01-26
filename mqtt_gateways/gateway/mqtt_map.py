@@ -4,8 +4,8 @@ representation of messages and the MQTT representation.
 
 It defines 2 classes:
 
-- :class:`InternalMsg` is the internal representation of a message
-- :class:`MsgMap` is the conversion engine between the internal
+- :class:`internalMsg` is the internal representation of a message
+- :class:`msgMap` is the conversion engine between the internal
   representation and the MQTT one.
 
 As a reminder, we define the MQTT syntax as follows:
@@ -17,6 +17,7 @@ As a reminder, we define the MQTT syntax as follows:
 ..
     TODO: change empty strings assignment with None
     TODO: introduce the 'root' parameter for the MQTT root
+    TODO: review mapping strategy in case of item not found in map
 '''
 
 import logging
@@ -31,7 +32,7 @@ _INTERNAL2MQTT = 1
 _UNDEFINED = 'undefined'
 '''string: default name for an empty characteristic'''
 
-class InternalMsg(object):
+class internalMsg(object):
     '''
     Defines all the characteristics of an internal message.
 
@@ -73,7 +74,7 @@ class InternalMsg(object):
                         ';action=', self.action
                        ))
 
-class MsgMap(object):
+class msgMap(object):
     '''
     Contains the mapping data and the conversion methods.
 
@@ -112,7 +113,7 @@ class MsgMap(object):
         '''pair of dictionaries: contains the mapping data for the **function** characteristic.
                 the first dictionary relate MQTT keywords to internal keywords;
                 the second one is the inverse.'''
-        self._gateway_map = [{}, {}] # unused for now
+        self._gateway_map = [{}, {}]
         '''same for the **gateway** characteristic'''
         self._location_map = [{}, {}]
         '''same for the **location** characteristic'''
@@ -158,7 +159,7 @@ class MsgMap(object):
                 i.e. in the form ``root/function/gateway/location/device/source/type{C or S}``
 
         Returns:
-            InternalMsg object: the conversion of the MQTT message
+            internalMsg object: the conversion of the MQTT message
 
         Raises:
             ValueError: in case of bad MQTT syntax or unrecognised map elements
@@ -174,7 +175,7 @@ class MsgMap(object):
             raise ValueError(''.join(('Topic <', mqtt_msg.topic,
                                       '> has not the right number of tokens.')))
 
-        # Check here function or gateway, but they are probably filtered by the topic subscription
+        # One can check here the function or gateway, or filter them through the topic subscription
 
         if tokens[6] == 'S': iscmd = False
         elif tokens[6] == 'C': iscmd = True
@@ -192,8 +193,9 @@ class MsgMap(object):
         try: function = self._function_map[_MQTT2INTERNAL][tokens[1]]
         except KeyError: function = ''
 
+        # here we use the actual incoming string if it is not found in the map
         try: gateway = self._gateway_map[_MQTT2INTERNAL][tokens[2]]
-        except KeyError: gateway = ''
+        except KeyError: gateway = tokens[2]
 
         args = {}
         # the payload syntax is a query string 'key1=value1&key2=value2&...' if...
@@ -215,7 +217,7 @@ class MsgMap(object):
         except KeyError:
             raise ValueError(''.join(('MQTT action <', mqtt_action, '> unrecognised.')))
 
-        return InternalMsg(iscmd=iscmd,
+        return internalMsg(iscmd=iscmd,
                            function=function,
                            gateway=gateway,
                            location=location,
@@ -237,7 +239,7 @@ class MsgMap(object):
         typo in one of the maps.
 
         Args:
-            internal_msg (an InternalMsg object): the message to convert
+            internal_msg (an internalMsg object): the message to convert
 
         Returns:
             a MQTTMessage object: a full MQTT message where topic syntax is
@@ -285,13 +287,14 @@ class MsgMap(object):
                 mqtt_function = _UNDEFINED
                 self.logger.info(''.join(('Function <', internal_msg.function, '> not recognised.')))
 
+        # for the gateway, we use the internal string as the mqtt token if it is not found in the map
         if internal_msg.gateway == '' or internal_msg.gateway == _UNDEFINED:
             mqtt_gateway = _UNDEFINED
         else:
             try:
                 mqtt_gateway = self._gateway_map[_INTERNAL2MQTT][internal_msg.gateway]
             except KeyError:
-                mqtt_gateway = _UNDEFINED
+                mqtt_gateway = internal_msg.gateway
                 self.logger.info(''.join(('Gateway <', internal_msg.gateway, '> not recognised.')))
 
         # Include here treatment to generate topic
