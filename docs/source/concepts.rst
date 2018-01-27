@@ -174,7 +174,7 @@ payload. The topic is structured like this:
 
 	root/function/gateway/location/device/source/type
 
-where ``root`` can be anything the developper wants (``home`` for example)
+where ``root`` can be anything the developer wants (``home`` for example)
 and ``type`` can be only ``C`` or ``S``.
 	
 The payload is simply the action alone if there are no arguments:
