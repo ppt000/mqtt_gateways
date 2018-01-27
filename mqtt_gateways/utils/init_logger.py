@@ -1,11 +1,15 @@
 '''
 Function to initialise the 'root' logger with pre-defined handlers.
 
-Usage::
+Usage (from the main script):
 
+.. code-block:: none
+
+    from init_logger import initlogger
+    
     # Use the name of the application as 'module_name':
     logger = logging.getLogger('module_name')
-    init_logger.initlogger(logger, 'module_name' , filepath, [log_debug])
+    initlogger(logger, 'module_name' , filepath, [log_debug])
 
 '''
 

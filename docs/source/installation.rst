@@ -13,28 +13,9 @@ Please install it if you do not have it already in your environment.
 
 The directory structure of the relevant files should look like this:
 
-.. code-block:: none
-
-	mqtt_gateways/   (root)
-	|
-	\- mqtt_gateways/   (package)
-	   |
-	   +- __init__.py
-	   |
-	   +- gateway/
-	   |  +- __init__.py
-	   |  +- mqtt_map.py
-	   |  \- start_gateway.py
-	   |
-	   +- utils/   (files not shown here)
-	   |
-	   +- dummy/
-	      +- __init__.py
-	      +- dummy_interface.py
-	      +- dummy2mqtt.py
-	      \- data/
-	         +- dummy2mqtt.conf
-	         \- dummy2mqtt.map
+.. image:: directory_tree.png
+   :scale: 60%
+   :align: center
 
 The core engine of the project is the ``gateway`` sub-package with
 the main module ``start_gateway.py``

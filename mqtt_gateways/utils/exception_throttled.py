@@ -14,7 +14,9 @@ The code using these exceptions can test the member ``trigger`` and decide to si
 the error until it is True.  At any point one can still decide to use these exceptions
 as normal ones and ignore the ``trigger`` and ``report`` members.
 
-Usage::
+Usage:
+
+.. code-block:: none
 
     try:
         some statements that might raise your own exception derived from this one

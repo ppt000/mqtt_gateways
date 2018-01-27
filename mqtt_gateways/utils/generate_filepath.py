@@ -43,7 +43,7 @@ def generatefilepath(basename, ext, absdirpath, pathgiven):
         if dirname == '': dirname = absdirpath
         elif not os.path.isabs(dirname): dirname = os.path.join(absdirpath, dirname)
         filepath = os.path.join(dirname, filename)
-    return filepath
+    return os.path.normpath(filepath)
 
 if __name__ == '__main__':
     print 'Test1 -----------------------'

@@ -181,7 +181,7 @@ The payload is simply the action alone if there are no arguments:
 
 .. code-block:: none
 
-	action
+	action_name
 	
 or the action with the arguments all in a query string style like this:
 
