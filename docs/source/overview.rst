@@ -85,3 +85,13 @@ keywords and the internal keywords.  This is only to allow changing the
 MQTT syntax in the future without touching the code.
 
 For a complete guide on how to develop an interface, go to `Tutorial <tutorial.html>`_.
+
+Available gateways
+******************
+
+The repository can contain some already developed gateways to existing systems.
+The currently available gateways are:
+
+- **dummy**: template; check the :mod:`mqtt_gateways.dummy` documentation.
+- **C-Bus**: gateway to the Clipsal-Schneider C-Bus system, via its PCI Serial Interface.
+  Check the :mod:`mqtt_gateways.cbus` documentation.   
