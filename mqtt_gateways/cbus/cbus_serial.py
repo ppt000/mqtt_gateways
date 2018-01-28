@@ -76,17 +76,13 @@ class cbusSerial(serial.Serial):
     It is an extension of the Serial class. It allows to open
     the port specifically to communicate with the C-Bus interface, as well as
     initiate its parameters.  The methods defined override the serial library
-    ones; they mostly catch the exceptions and log the errors if any. Any code
-    using these methods must make sure that values returned are tested and that
-    any behaviour producing inconsistent results might mean simply that the port
-    is not working, exceptions are being caught and 'dummy' parameters are being
-    returned by the methods.  This should allow to write non-blocking code that
-    deals with the bad connection only at some specific points, for example in
-    the main loop, and not at each write or read command. The 'failed' boolean
-    field is set to True each time a read or write operation generates an error,
-    and is set back to False every time such operations are successful.  The
-    outer code can check this field to know simply if the latest operation was
-    successful or not.
+    ones; they mostly catch the exceptions and log the errors if any.
+    
+    Any code using these methods must make sure that values returned are tested and
+    that exceptions are being caught.  In those cases probably the port
+    is not working and need to be restarted or the application has to stop.
+    This allows to write non-blocking code that deals with the bad connection only
+    at higher levels, for example in the main loop, rather than at each write or read command.
 
     The constructor tries to open the port but might not succeed.  Therefore the class
     instance is always created but the port might be open or not.

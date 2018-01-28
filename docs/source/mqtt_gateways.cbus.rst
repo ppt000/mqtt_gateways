@@ -26,6 +26,7 @@ mqtt\_gateways\.cbus\.cbus\_interface module
 .. automodule:: mqtt_gateways.cbus.cbus_interface
     :members:
     :undoc-members:
+    :private-members:
     :show-inheritance:
 
 mqtt\_gateways\.cbus\.cbus\_serial module
@@ -34,6 +35,7 @@ mqtt\_gateways\.cbus\.cbus\_serial module
 .. automodule:: mqtt_gateways.cbus.cbus_serial
     :members:
     :undoc-members:
+    :private-members:
     :show-inheritance:
 
 mqtt\_gateways\.cbus\.cbus\_data module
