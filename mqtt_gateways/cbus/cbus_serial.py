@@ -73,7 +73,7 @@ class cbusSerial(serial.Serial):
     '''
     Represents the low-level communication layer with the C-Bus PCI serial interface.
 
-    It is an extension of the Serial class. It allows to open
+    It is an extension of the ``pySerial.Serial`` class. It allows to open
     the port specifically to communicate with the C-Bus interface, as well as
     initiate its parameters.  The methods defined override the serial library
     ones; they mostly catch the exceptions and log the errors if any.

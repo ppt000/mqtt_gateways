@@ -30,7 +30,7 @@ _PATTERN_CALReply = '86[0-9A-F]{4}00([0-9A-F]{2})0738([0-9A-F]{2})([0-9A-F]+)'
 ''' RegEx patterns to match incoming messages from C-Bus; see docs for terminology.'''
 
 _PATTERN_LevelRequest = '\x5C05FF00730738'
-''' Level request pattern (it is just a string here) - it needs to be followed by the Block Start and then \x0D.'''
+''' Level request pattern (it is just a string here) - it needs to be followed by the Block Start and then x0D.'''
 
 _CBUSMSGMAXLEN = 16 # max = 21, - 3 for the header, and must be multiple of 4 to be sure.
 ''' C-Bus actual maximum message length.'''
@@ -158,7 +158,7 @@ class cbusInterface(cbusSerial):
         commands so that the maximum amount of messages are sent to the
         interface. According to the documentation, the maximum length of the
         code that can be sent to the serial interface is 21 bytes, excluding the
-        leading \x5C and the trailing \x0D. This means 18 bytes for commands
+        leading x5C and the trailing x0D. This means 18 bytes for commands
         (excluding the '053800' at the beginning). Therefore the length of
         concatenated commands is tested in order to avoid sending messages that
         are too long.
