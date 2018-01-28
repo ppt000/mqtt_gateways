@@ -43,5 +43,6 @@ Contents
    Installation <installation>
    Concepts <concepts>
    Tutorial <tutorial>
-   Reference <reference>
+   Configuration <configuration>
+   Package Documentation <mqtt_gateways>
    Indices <indices>
