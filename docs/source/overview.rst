@@ -38,7 +38,7 @@ This project has 2 parts:
    of the addressing syntax and the commands translation via
    mapping data provided by the interface. 
 
-For a more in-depth discussion, go to `Concepts <concepts.html>`_.
+For a more in-depth discussion, go to :doc:`Concepts <concepts>`.
 
 Usage
 *****
@@ -59,7 +59,7 @@ The installation involves a simple copy of the repository and the setting of
 some basic configuration parameters.  The only dependency is the
 `paho.mqtt <https://pypi.python.org/pypi/paho-mqtt>`_ library.
 
-For the full installation guide, go to `Installation <installation.html>`_.
+For the full installation guide, go to :doc:`Installation <installation>`.
 
 Develop your interface
 **********************
@@ -84,7 +84,7 @@ A simple mapping text file stores the correspondence between the MQTT
 keywords and the internal keywords.  This is only to allow changing the
 MQTT syntax in the future without touching the code.
 
-For a complete guide on how to develop an interface, go to `Tutorial <tutorial.html>`_.
+For a complete guide on how to develop an interface, go to :doc:`Tutorial <tutorial>`.
 
 Available gateways
 ******************

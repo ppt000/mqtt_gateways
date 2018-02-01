@@ -150,6 +150,9 @@ class msgMap(object):
                 self.logger.info(''.join(('Incorrect line <', line,
                                           '> in map data, skip the line.')))
 
+        # assign and check the 'root' of the topics
+        self.root = 'home' # just use 'home' for now
+
     def mqtt2internal(self, mqtt_msg):
         '''
         Converts the MQTT message into an internal one.
@@ -298,14 +301,8 @@ class msgMap(object):
                 self.logger.info(''.join(('Gateway <', internal_msg.gateway, '> not recognised.')))
 
         # Include here treatment to generate topic
-        topic = ''.join(('home/',
-                         mqtt_function, '/',
-                         mqtt_gateway, '/',
-                         mqtt_location, '/',
-                         mqtt_device, '/',
-                         self.appname, '/',
-                         'C' if internal_msg.iscmd else 'S'))
-
+        topic = '/'.join((self.root, mqtt_function, mqtt_gateway, mqtt_location,
+                          mqtt_device, self.appname, 'C' if internal_msg.iscmd else 'S'))
         try:
             mqtt_action = self._action_map[_INTERNAL2MQTT][internal_msg.action]
         except KeyError:

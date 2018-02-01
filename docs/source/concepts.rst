@@ -124,8 +124,8 @@ Bridging MQTT and the interface
 There are therefore a total of 8 characteristics in our message model:
 
 - **function**,
-- **location**,
 - **gateway**,
+- **location**,
 - **device**,
 - **type**,
 - **action**,
