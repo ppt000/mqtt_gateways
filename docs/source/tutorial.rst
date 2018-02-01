@@ -85,6 +85,10 @@ There a few important points to make here:
   the command.
 
 
+.. note::
+	What follows does not make sense... yet! Updates coming soon.
+
+
 In the folder ``mqtt_gateways/data`` create the file ``entry2mqtt.map``.
 
 
