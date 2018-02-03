@@ -4,18 +4,19 @@ Overview
 Objective
 *********
 
-When setting up an IoT ecosystem putting together a lot of different
+When setting up an IoT eco-system with a lot of different
 devices, it becomes quickly problematic to have them talking to each other
 smoothly.  There are a number of choices to make in order for this to happen.
-This project assumes that some of those choices have been made: using MQTT
-as the messaging protocol for example.  What this project does is helping
+This project assumes that some of those choices have been made: using
+`MQTT <http://mqtt.org/>`_ as the messaging protocol for example.
+What this project does is helping
 in the next set of choices to make: choosing a consistent messaging model
 and defining its implementation via a MQTT syntax.
 
 If all the devices involved already communicate via MQTT, this project
 can only help with this proposed syntax for MQTT messages.  If some devices
 can't communicate natively via MQTT, then this project proposes a
-python wrapper that should greatly facilitate writing the gateway
+python wrapper that should facilitate writing the gateway
 between these devices and the MQTT network.  This gateway can then run
 as a service on a machine that is connected to these devices via
 whatever interface is available: serial, bluetooth, TCP, or else.
@@ -30,9 +31,8 @@ This project has 2 parts:
 
 1. The definition of the messaging model: the project has its own
    model for messages which is adapted to domestic IoT environments
-   (a.k.a. *smart homes*).  It is an abstraction layer that defines a
-   message by many attributes and not only by destination and content,
-   or by topic & payload for example.
+   (*smart homes*).  It is an abstraction layer that defines a
+   message by many attributes and not only by destination and content.
 2. The implementation of this model through a python wrapper
    to communicate via MQTT networks.  The wrapper takes care
    of the addressing syntax and the commands translation via
@@ -50,7 +50,7 @@ The developer can then write its own interface by using the
 **dummy** interface as a template.
 
 If a gateway is not needed, this project can still help in defining
-a consistent MQTT syntax within a MQTT ecosystem of different devices.
+a consistent MQTT syntax within a MQTT eco-system of different devices.
 
 Installation
 ************
@@ -85,13 +85,3 @@ keywords and the internal keywords.  This is only to allow changing the
 MQTT syntax in the future without touching the code.
 
 For a complete guide on how to develop an interface, go to :doc:`Tutorial <tutorial>`.
-
-Available gateways
-******************
-
-The repository can contain some already developed gateways to existing systems.
-The currently available gateways are:
-
-- **dummy**: template; check the :mod:`mqtt_gateways.dummy` documentation.
-- **C-Bus**: gateway to the Clipsal-Schneider C-Bus system, via its PCI Serial Interface.
-  Check the :mod:`mqtt_gateways.cbus` documentation.   

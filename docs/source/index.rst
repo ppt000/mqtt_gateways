@@ -33,6 +33,17 @@ looking to adopt a definitive syntax for their MQTT messages and
 to build gateways with their devices that are not MQTT enabled.
 
 
+Available gateways
+------------------
+
+The repository contains some already developed gateways to existing systems.
+The currently available gateways are:
+
+- **dummy**: the template; check the :mod:`mqtt_gateways.dummy` documentation.
+- **entry**: example used for the tutorial; check it :doc:`here <tutorial>`.
+- **C-Bus**: gateway to the Clipsal-Schneider C-Bus system, via its PCI Serial Interface.
+    Check the :doc:`C-Bus <cbus>` documentation.
+
 Contents
 ********
 
@@ -44,5 +55,6 @@ Contents
    Concepts <concepts>
    Tutorial <tutorial>
    Configuration <configuration>
+   C-Bus Gateway <cbus>
    Package Documentation <mqtt_gateways>
    Indices <indices>

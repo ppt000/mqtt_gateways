@@ -1,6 +1,7 @@
 
 
-Please find the documentation `here <http://mqtt-gateways.readthedocs.io/>`_.
+The documentation in ``docs/source`` is formatted to be read in `ReadTheDocs <http://mqtt-gateways.readthedocs.io/>`_.
+Head there to browse it.
 
 Welcome to MQTT_Gateways
 =========================

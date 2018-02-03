@@ -24,6 +24,9 @@ via the USB connection in serial mode for example.
 The micro-controller can also be told to switch ON or OFF a relay to release the gate.
 We will call ``Entry System`` the combination of the actual entry system with the
 micro-controller physical interface.
+*Note*: of course a Raspberry Pi could sense directly the electrical contacts without
+being shielded by another board. However this use-case suits the tutorial, and is
+probably more reliable in the long run.
 
 Implementation
 **************
