@@ -31,4 +31,10 @@ Developers of MQTT networks in a domestic environment, or *smart homes*,
 looking to adopt a definitive syntax for their MQTT messages and
 to build gateways with their devices that are not MQTT enabled.
 
+Available gateways
+------------------
 
+The repository contains some already developed gateways to existing systems.
+The currently available gateways are:
+
+- **C-Bus**: gateway to the Clipsal-Schneider C-Bus system, via its PCI Serial Interface.
