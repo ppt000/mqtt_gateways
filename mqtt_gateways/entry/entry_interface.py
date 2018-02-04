@@ -13,9 +13,6 @@ import os.path
 
 import serial
 
-# only import this module for the example code in loop()
-import time
-
 from mqtt_gateways.gateway.mqtt_map import internalMsg
 
 class entryInterface(object):
