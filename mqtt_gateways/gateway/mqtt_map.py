@@ -96,15 +96,15 @@ class msgMap(object):
 
     def __init__(self, mapdata, fullpath=None):
         if fullpath is None: # create NullHandler as the root name is not known
-            self.logger = logging.getLogger(__name__)
-            self.logger.addHandler(logging.NullHandler())
+            self._logger = logging.getLogger(__name__)
+            self._logger.addHandler(logging.NullHandler())
             self.appname = _UNDEFINED   # for the MQTT topic source
         else: # hook up to the 'root' logger
             # first part of the filename, without extension
             self.appname = os.path.splitext(os.path.basename(fullpath))[0]
             self._logger = logging.getLogger(''.join((self.appname, ".", __name__)))
 
-        self.logger.debug(''.join(('Module <', __name__, '> started.')))
+        self._logger.debug(''.join(('Module <', __name__, '> started.')))
 
         self.topics = []
         '''list of strings: the list of topics to subscribe to'''
@@ -124,30 +124,36 @@ class msgMap(object):
 
         for line in mapdata.splitlines():
             try:
-                tokens = line.rstrip().split(':')
-                items = tokens[1].rstrip().split(',')
+                tokens = [item.strip() for item in line.split(':')]
+                items = [item.strip() for item in tokens[1].split(',')]
                 if  tokens[0] == 'topic':
                     self.topics.append(items[0])
+                    self._logger.debug(''.join(('Added topic ',items[0],'.')))
                 elif tokens[0] == 'function':
                     self._function_map[_MQTT2INTERNAL][items[0]] = items[1]
                     self._function_map[_INTERNAL2MQTT][items[1]] = items[0]
+                    self._logger.debug(''.join(('Added function: ',items[0],'=',items[1],'.')))
                 elif tokens[0] == 'gateway':
                     self._gateway_map[_MQTT2INTERNAL][items[0]] = items[1]
                     self._gateway_map[_INTERNAL2MQTT][items[1]] = items[0]
+                    self._logger.debug(''.join(('Added gateway: ',items[0],'=',items[1],'.')))
                 elif tokens[0] == 'location':
                     self._location_map[_MQTT2INTERNAL][items[0]] = items[1]
                     self._location_map[_INTERNAL2MQTT][items[1]] = items[0]
+                    self._logger.debug(''.join(('Added location: ',items[0],'=',items[1],'.')))
                 elif tokens[0] == 'device':
                     self._device_map[_MQTT2INTERNAL][items[0]] = items[1]
                     self._device_map[_INTERNAL2MQTT][items[1]] = items[0]
+                    self._logger.debug(''.join(('Added device: ',items[0],'=',items[1],'.')))
                 elif tokens[0] == 'action':
                     self._action_map[_MQTT2INTERNAL][items[0]] = items[1]
                     self._action_map[_INTERNAL2MQTT][items[1]] = items[0]
+                    self._logger.debug(''.join(('Added action: ',items[0],'=',items[1],'.')))
                 else:
-                    self.logger.info(''.join(('Unrecognised token in line <', line,
+                    self._logger.info(''.join(('Unrecognised token in line <', line,
                                               '> in map data, skip the line.')))
             except IndexError:
-                self.logger.info(''.join(('Incorrect line <', line,
+                self._logger.info(''.join(('Incorrect line <', line,
                                           '> in map data, skip the line.')))
 
         # assign and check the 'root' of the topics
@@ -263,7 +269,7 @@ class msgMap(object):
             except KeyError:
                 mqtt_location = _UNDEFINED
                 locfound = False
-                self.logger.info(''.join(('Location <', internal_msg.location, '> unrecognised.')))
+                self._logger.info(''.join(('Location <', internal_msg.location, '> unrecognised.')))
 
         if internal_msg.device == '' or internal_msg.device == _UNDEFINED:
             mqtt_device = _UNDEFINED
@@ -275,7 +281,7 @@ class msgMap(object):
             except KeyError:
                 mqtt_device = _UNDEFINED
                 devfound = False
-                self.logger.info(''.join(('Device <', internal_msg.device, '> unrecognised.')))
+                self._logger.info(''.join(('Device <', internal_msg.device, '> unrecognised.')))
 
         if (not locfound) and (not devfound):
             raise ValueError(''.join(('Both location <', str(internal_msg.location), '> and device <',
@@ -288,7 +294,7 @@ class msgMap(object):
                 mqtt_function = self._function_map[_INTERNAL2MQTT][internal_msg.function]
             except KeyError:
                 mqtt_function = _UNDEFINED
-                self.logger.info(''.join(('Function <', internal_msg.function, '> not recognised.')))
+                self._logger.info(''.join(('Function <', internal_msg.function, '> not recognised.')))
 
         # for the gateway, we use the internal string as the mqtt token if it is not found in the map
         if internal_msg.gateway == '' or internal_msg.gateway == _UNDEFINED:
@@ -298,7 +304,7 @@ class msgMap(object):
                 mqtt_gateway = self._gateway_map[_INTERNAL2MQTT][internal_msg.gateway]
             except KeyError:
                 mqtt_gateway = internal_msg.gateway
-                self.logger.info(''.join(('Gateway <', internal_msg.gateway, '> not recognised.')))
+                self._logger.info(''.join(('Gateway <', internal_msg.gateway, '> not recognised.')))
 
         # Include here treatment to generate topic
         topic = '/'.join((self.root, mqtt_function, mqtt_gateway, mqtt_location,

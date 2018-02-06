@@ -192,7 +192,7 @@ def startgateway(gateway_interface, fullpath=None):
             map_data = mapfile.read()
     except (OSError, IOError) as err:
         raise OSError(''.join(('Error <', str(err), '> with map file <', mapfilepath, '>.')))
-    messagemap = msgMap(map_data)
+    messagemap = msgMap(map_data, fullpath)
     # Initialise the dictionary to store parameters and to pass to the callbacks
     localdata = {}
     localdata['connected'] = False #  boolean to indicate connection, to be set in the callbacks
