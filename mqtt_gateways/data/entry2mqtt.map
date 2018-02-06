@@ -5,7 +5,8 @@ function: security, Security
 function: lighting, Lighting
 gateway: entry2mqtt, entry2mqtt
 location: frontgarden, gate_entry
-device: entrysystem, entry_system
+device: bell, Bell
+device: gate, Gate
 action: bell_on, BELL_ON
 action: bell_off, BELL_OFF
 action: gate_open, GATE_OPEN

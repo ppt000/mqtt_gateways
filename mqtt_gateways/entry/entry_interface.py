@@ -132,7 +132,6 @@ class entryInterface(object):
             msg = internalMsg(iscmd=True,
                               function='Lighting',
                               location='gate_entry',
-                              action='LIGHT_ON',
-                              source='entry2mqtt')
+                              action='LIGHT_ON')
             self._msgl_out.append(msg)
 
