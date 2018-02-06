@@ -110,7 +110,8 @@ The map file would then look like this (line order doesn't matter but first keyw
    function: lighting, Lighting
    gateway: entry2mqtt, entry2mqtt
    location: frontgarden, gate_entry
-   device: entrysystem, entry_system
+   device: bell, Bell
+   device: gate, Gate
    action: bell_on, BELL_ON
    action: bell_off, BELL_OFF
    action: gate_open, GATE_OPEN
@@ -262,8 +263,7 @@ Finally, let's send a command to switch on the light in case the gate was opened
         msg = internalMsg(iscmd=True,
                           function='Lighting',
                           location='gate_entry',
-                          action='LIGHT_ON',
-                          source='entry2mqtt')
+                          action='LIGHT_ON')
         self._msgl_out.append(msg)
 
 That's it. Of course one can improve the functionality by putting a timer
