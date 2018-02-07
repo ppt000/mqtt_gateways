@@ -221,10 +221,12 @@ def startgateway(gateway_interface, fullpath=None):
     # Main loop
     while True:
         # Deal with the situation where mqtt is not connected as the loop() method does not automatically reconnect.
-        if not localdata['connected']:
-            try: raise mqttConnectionError('Client can''t reconnect to broker.')
-            except mqttConnectionError as err: # not very elegant but works
-                if err.trigger: logger.critical(err.report)
+        if not localdata['connected']: # the MQTT broker is not connected
+            try: mqttclient.reconnect() # try to reconnect
+            except (OSError, IOError): # still no connection
+                try: raise mqttConnectionError('Client can''t reconnect to broker.') # throttled log
+                except mqttConnectionError as err: # not very elegant but works
+                    if err.trigger: logger.error(err.report)
         # Call the mqtt loop.
         mqttclient.loop(localdata['timeout'])
         # Call the interface loop.
