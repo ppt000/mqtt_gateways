@@ -50,7 +50,7 @@ def loadconfig(cfg_dflt_string, cfg_filepath):
     '''
 
     # Load the default configuration
-    cfg_dflt = ConfigParser.RawConfigParser()
+    cfg_dflt = ConfigParser.RawConfigParser(allow_no_value=True)
     cfg_dflt.readfp(io.BytesIO(cfg_dflt_string)) # should not throw any errors
 
     try:
