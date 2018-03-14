@@ -28,6 +28,10 @@ micro-controller physical interface.
 being shielded by another board. However this use-case suits the tutorial, and is
 probably more reliable in the long run.
 
+.. image:: entry2mqtt.png
+   :scale: 50%
+   :align: center
+
 Implementation
 **************
 The micro-controller is programmed to communicate with very simple messages for each event:
@@ -57,7 +61,7 @@ functionalities that we want to implement.
 Here we want the gateway to broadcast the state changes of the bell (1) and the gate release (2),
 as well as open the gate when commanded to (3).  Additionally, we would like the light at the gate to be switched
 on when the gate is opened (4) (this could be done in another application that receives the *gate open* broadcast,
-but it is useful to show how it can be done inside this gateway).  We therefore have 4 *events* to model
+but it is useful to show how it can be done inside this gateway).  We therefore have the following *events* to model
 with our message characteristics (see :doc:`Concepts <concepts>`).
 
 .. csv-table:: Model
