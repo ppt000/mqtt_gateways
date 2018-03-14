@@ -73,7 +73,7 @@ class dummyInterface(object):
         # optional success message
         self._logger.debug(''.join(('Parameter "port" successfully updated with value <',
                                     port, '>')))
-        # *** INITIATE YOUR INTERFACE HERE ***
+        # *** INITIALISE YOUR INTERFACE HERE ***
 
         # Keep the message lists locally
         self._msgl_in = msgls[0]
