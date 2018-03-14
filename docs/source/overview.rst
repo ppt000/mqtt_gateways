@@ -85,3 +85,5 @@ keywords and the internal keywords.  This is only to allow changing the
 MQTT syntax in the future without touching the code.
 
 For a complete guide on how to develop an interface, go to :doc:`Tutorial <tutorial>`.
+
+For a more detailed description of the project, go to :doc:`Project Description <description>`.

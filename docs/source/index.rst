@@ -55,6 +55,8 @@ Contents
    Concepts <concepts>
    Tutorial <tutorial>
    Configuration <configuration>
+   Project Description <description>
    C-Bus Gateway <cbus>
+   MusicCast Gateway <musiccast>
    Package Documentation <mqtt_gateways>
    Indices <indices>
