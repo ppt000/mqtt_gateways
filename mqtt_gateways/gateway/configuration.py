@@ -36,10 +36,14 @@ mapfilename: data/
 logfilename: data/
 # Turn debug 'on' if logging of all debug messages is required, otherwise its INFO
 debug: off
-# Email credentials
-host: 127.0.0.1
-port: 25
-address: me@example.com
+# Email credentials; leave empty if not required
+# for example: host: 127.0.0.1
+host:
+# for example: port: 25
+port:
+# for example: address: me@example.com
+address:
+
 # Note on file paths (or file names):
 #   - the default name is 'application_name' + default extension (.log, .map, ... etc);
 #   - the default path is the 'application' directory, which 'should' be the location of the launching script;
