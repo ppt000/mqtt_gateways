@@ -162,9 +162,9 @@ def startgateway(gateway_interface, fullpath=None):
     cfg = loadconfig(CONFIG, conffilepath)
 
     # Initialise the root logger.
-    logger = logging.getLogger(app_name)
+    logger = logging.getLogger(app_name) # TODO: Remove app_name if it works in tests.
     logfilepath = generatefilepath(app_name, '.log', app_path, cfg.get('LOG', 'logfilename'))
-    emailhost = (cfg.get('LOG', 'host'), cfg.getint('LOG', 'port'))
+    emailhost = (cfg.get('LOG', 'host'), cfg.get('LOG', 'port'))
     initlogger(logger, app_name, logfilepath, cfg.getboolean('LOG', 'debug'),
                emailhost, cfg.get('LOG', 'address'))
     # Log the configuration used.
