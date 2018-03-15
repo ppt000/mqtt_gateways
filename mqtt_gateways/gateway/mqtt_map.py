@@ -47,21 +47,33 @@ class internalMsg(object):
         gateway (string): internal representation of gateway, optional
         location (string): internal representation of location, optional
         device (string): internal representation of device, optional
+        source (string): internal representation of source, optional
         action (string): internal representation of action, optional
         arguments (dictionary of strings): all values should be assumed to be strings, optional
 
     '''
-
+    # TODO: decide if None members are accepted (instead of an empty string)
     def __init__(self, iscmd=False, function='', gateway='',
-                 location='', device='', action='', arguments=None):
+                 location='', device='', source='', action='', arguments=None):
         self.iscmd = iscmd
         self.function = function
         self.gateway = gateway
         self.location = location
         self.device = device
+        self.source = source
         self.action = action
         if arguments is None: self.arguments = {}
         else: self.arguments = arguments
+
+    def copy(self):
+        return internalMsg(iscmd=self.iscmd,
+                           function=self.function,
+                           gateway=self.gateway,
+                           location=self.location,
+                           device=self.device,
+                           source=self.source,
+                           action=self.action,
+                           arguments=self.arguments.copy()) # TODO: is a copy enough?
 
     def str(self):
         '''Helper function to stringify the class attributes.
@@ -71,8 +83,20 @@ class internalMsg(object):
                         ';gateway=', self.gateway,
                         ';location=', self.location,
                         ';device=', self.device,
+                        ';source=', self.source,
                         ';action=', self.action
                        ))
+
+    def reply(self, response, reason):
+        ''' Formats the message to be sent as a reply to an existing command
+        
+        This method is supposed to be used with an existing message that has been received
+        by the interface
+        '''
+        self.iscmd = False
+        self.arguments['response'] = response
+        self.arguments['reason'] = reason
+        return self
 
 class msgMap(object):
     '''
