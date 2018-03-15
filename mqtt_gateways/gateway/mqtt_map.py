@@ -79,12 +79,13 @@ class internalMsg(object):
         '''Helper function to stringify the class attributes.
         '''
         return ''.join(('cmd=', str(self.iscmd),
-                        ';function=', self.function,
-                        ';gateway=', self.gateway,
-                        ';location=', self.location,
-                        ';device=', self.device,
-                        ';source=', self.source,
-                        ';action=', self.action
+                        ';function=', str(self.function),
+                        ';gateway=', str(self.gateway),
+                        ';location=', str(self.location),
+                        ';device=', str(self.device),
+                        ';source=', str(self.source),
+                        ';action=', str(self.action),
+                        ';arguments', str(self.arguments)
                        ))
 
     def reply(self, response, reason):
