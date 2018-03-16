@@ -22,8 +22,10 @@ CONFIG = '''
 host: 127.0.0.1
 port: 1883
 keepalive: 60
-# This is the timeout of the 'loop()' call in the mqtt library
+# This is the timeout of the 'loop()' call in the MQTT library
 timeout: 0.01
+# The 'root' of all the topics
+root: home
 # The reconnection is attempted every 'reconnect_delay' seconds
 #reconnect_delay: 30
 # Maximum number of reconnection attempts
