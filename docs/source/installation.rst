@@ -32,8 +32,8 @@ The ``dummy`` sub-package is the first interface.
 It doesn't do anything except helping to check the set-up
 and understand the inner workings of the application.
 
-The ``dummy`` sub-package has a sub-directory ``data`` containing 2 files:
-the configuration file ``dummy2mqtt.conf`` and the map file ``dummy2mqtt.map``.
+The 'data' directory contains all the data files for all the interfaces.
+These are usually the configuration files and the mapping data files.
 
 Configuration
 *************
@@ -57,7 +57,7 @@ Edit the ``dummy2mqtt.conf`` file in the ``[MQTT]`` section:
 The address of the MQTT broker should be provided in the same format
 as expected by the **paho.mqtt** library, usually a raw IP address
 (``192.168.1.55`` for example) if the broker is on your local network,
-or an http address (not tested) if your broker is in the cloud.
+or an http address *(not tested)* if your broker is in the cloud.
 The default port is 1883, if it is different it can also be indicated
 in the configuration file.
 
@@ -75,12 +75,9 @@ From there, type:
 
 .. code-block:: none
 
-	python -m mqtt_gateways.dummy.dummy2mqtt data/
+	python -m mqtt_gateways.dummy.dummy2mqtt ../data/
 
-The ``data/`` argument indicates where the configuration file is.
-In this case it indicates the sub-directory ``data`` inside the
-sub-package ``dummy`` where the launcher script ``dummy2mqtt.py``
-resides.
+The ``../data/`` argument indicates where the configuration file is.
 
 The application only outputs 1 line to start with:
 it indicates the location of the log file.
@@ -132,7 +129,7 @@ It maps every keyword in the MQTT vocabulary into the equivalent keyword in the 
 This mapping is a very simple one-to-one relationship for every keyword, and its use is only
 to isolate the internal code from any changes in the MQTT vocabulary.
 For the **dummy** interface, the mapping data is provided by the text file
-``dummy2mqtt.map`` in the ``data`` folder.  It's just there as a template, as,
+``dummy_map.json`` in the ``data`` folder.  It's just there as a template, as,
 once again, the **dummy** interface really doesn't do anything.
 Note that the map file also contains the topics that the interface should
 subscribe to.

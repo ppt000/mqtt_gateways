@@ -103,41 +103,73 @@ those new keywords in the MQTT vocabulary, and other applications will need to k
 able to communicate with this gateway.
 
 For the sake of this tutorial, we will use MQTT keywords very similar to the ones used in our model above,
-apart from the fact that all letters are lowercase for the MQTT keywords (it's a choice, certainly not binding).
+apart from the fact that all letters are lowercase for the MQTT keywords (it's a choice).
 The only keyword that we will assume already exists is the location corresponding to the gate. Here we
 assume it is already defined as ``frontgarden`` and we will use it for our MQTT equivalent keyword.
-The map file would then look like this (line order doesn't matter but first keyword is always the MQTT one):
+We also need to add the subscription that we will need for our gateway.  Here we only need
+to receive messages that request the gate to be opened.  The topics to subscribe to have to be
+tight enough so that our gateway does not get flooded with messages that are not addressed to it,
+but also loose enough to be flexible and not too tied to a rigorous vocabulary.
 
-.. code-block:: none
+The map file would then look like this:
 
-   function: security, Security
-   function: lighting, Lighting
-   gateway: entry2mqtt, entry2mqtt
-   location: frontgarden, gate_entry
-   device: bell, Bell
-   device: gate, Gate
-   action: bell_on, BELL_ON
-   action: bell_off, BELL_OFF
-   action: gate_open, GATE_OPEN
-   action: gate_close, GATE_CLOSE
-   action: light_on, LIGHT_ON
-   action: light_off, LIGHT_OFF
+.. code-block:: json
 
-Finally we also add the subscription that we will need for our gateway.  Here we only need
-to receive messages that request the gate to be opened. Given the topic syntax defined, the
-subscriptions look like this and should be added to the map file:
+	{
+		"root": "home",
+		"topics": ["home/security/+/frontgarden/+/+/C",
+		"home/+/entry2mqtt/+/+/+/C",
+		"home/+/+/+/entrysystem/+/C"],
+		"function": {
+			"map": {
+				"security": "Security",
+				"lighting": "Lighting"
+			},
+			"maptype": "strict"
+		},
+		"gateway": {
+			"map": {
+				"entry2mqtt": "entry2mqtt"
+			},
+			"maptype": "strict"
+		},
+		"location": {
+			"map": {
+				"frontgarden": "gate_entry"
+			},
+			"maptype": "strict"
+		},
+		"device": {
+			"map": {
+				"gate": "Gate",
+				"bell": "Bell"
+			},
+			"maptype": "strict"
+		},
+		"source": {
+			"maptype": "none"
+		},
+		"action": {
+			"map": {
+				"gate_open": "GATE_OPEN",
+				"bell_off": "BELL_OFF",
+				"bell_on": "BELL_ON",
+				"light_off": "LIGHT_OFF",
+				"light_on": "LIGHT_ON",
+				"gate_close": "GATE_CLOSE"
+			},
+			"maptype": "strict"
+		},
+		"argkey": {
+			"maptype": "none"
+		},
+		"argvalue": {
+			"maptype": "none"
+		}
+	}
 
-.. code-block:: none
 
-   topic: home/security/+/frontgarden/+/+/C
-   topic: home/+/entry2mqtt/+/+/+/C
-   topic: home/+/+/+/entrysystem/+/C
-
-This is only a few of the possible topics to subscribe to.  They have to be tight enough so that
-our gateway does not get flooded with messages that are not addressed to it, but also loose enough
-to be flexible and not too tied to a rigorous vocabulary.
-
-Enter all those lines in a file named ``entry2mqtt.map`` to be created in the folder ``mqtt_gateways/data``.
+Enter all those lines in a file named ``entry_map.json`` to be created in the folder ``mqtt_gateways/data``.
 That's it for the map file.
 
 The interface
@@ -145,12 +177,12 @@ The interface
 
 The interface is a Python sub-package of the ``mqtt_gateways`` package.
 Let's create it in a new folder ``mqtt_gateways\entry`` with an empty
-module ``__init__.py`` (add a docstring if needed).
+module ``__init__.py``.
 In order not to start from scratch, let's use the ``dummy`` interface as
 a template.  Copy ``dummy_interface.py`` from the ``dummy`` package into the
 ``entry`` package, and change all the ``dummy`` instances into ``entry`` (in the
 name of the file as well as inside the file).  The actual interface code has to be in
-the class ``entryInterface`` within this module ``entry_interface.py``. It needs to
+the class ``entryInterface`` within the module ``entry_interface.py``. It needs to
 have at least a constructor ``__init__`` and a method called ``loop``.
 
 The constructor

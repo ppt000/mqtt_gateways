@@ -8,13 +8,13 @@ When setting up an IoT eco-system with a lot of different
 devices, it becomes quickly problematic to have them talking to each other
 smoothly.  There are a number of choices to make in order for this to happen.
 This project assumes that some of those choices have been made: using
-`MQTT <http://mqtt.org/>`_ as the messaging protocol for example.
+`MQTT <http://mqtt.org/>`_ as the messaging transport for example.
 What this project does is helping
 in the next set of choices to make: choosing a consistent messaging model
 and defining its implementation via a MQTT syntax.
 
 If all the devices involved already communicate via MQTT, this project
-can only help with this proposed syntax for MQTT messages.  If some devices
+can only help with its proposed syntax for MQTT messages.  If some devices
 can't communicate natively via MQTT, then this project proposes a
 python wrapper that should facilitate writing the gateway
 between these devices and the MQTT network.  This gateway can then run
@@ -49,9 +49,6 @@ interface with anything but shows how the system works.
 The developer can then write its own interface by using the
 **dummy** interface as a template.
 
-If a gateway is not needed, this project can still help in defining
-a consistent MQTT syntax within a MQTT eco-system of different devices.
-
 Installation
 ************
 
@@ -70,7 +67,7 @@ methods ``__init__`` (to initialise the interface) and ``loop``
 with the devices), very much like an Arduino script ``setup`` and ``loop`` functions.
 
 The ``loop`` method communicates with the application via 2 lists of
-message objects (an incoming and an outgoing one).  It reads the incoming list
+messages (an incoming and an outgoing one).  It reads the incoming list
 for commands from the MQTT environment and writes into the outgoing list any
 updates on status or commands sent from the devices to the rest of the network.
 
@@ -83,6 +80,9 @@ for messages from the device to be forwarded to the application.
 A simple mapping text file stores the correspondence between the MQTT
 keywords and the internal keywords.  This is only to allow changing the
 MQTT syntax in the future without touching the code.
+
+..
+	TODO: include a diagram
 
 For a complete guide on how to develop an interface, go to :doc:`Tutorial <tutorial>`.
 

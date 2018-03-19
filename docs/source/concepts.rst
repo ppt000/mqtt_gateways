@@ -57,12 +57,12 @@ Some considerations about those four characteristics:
 
 - not all four characteristics need to be provided to address succesfully
   a device;
-- any device can have more than one value for each characteristics,
-  particularly the **function**  and **device** ones (it is likely
-  for the **gateway** and **location** characteristics);
 - the **device** name can be generic (e.g. ``spotlight``) or specific and unique
   within the network (e.g. ``lightid1224``); in the generic case, obviously
   other characteristics are needed to address the device.
+- any device can have more than one value for each characteristics,
+  particularly the **function**  and **device** ones (it is unlikely
+  for the **gateway** and **location** characteristics);
 - the **location** is important and probably the most intuitive characteristic
   of all; preferably it should represent the place where the device
   operates and not where it is physically located (e.g. an audio amplifier
@@ -100,8 +100,8 @@ in many different ways.  This project splits it into 3 *characteristics*:
   an action to be performed, or *status* for messages that only broadcast
   a state;
 - an **action** that indicates what to do or what the status is, or is
-  referring;
-- an **argument** that might complete the **action** characteristic.
+  referring to;
+- a set of **arguments** that might complete the **action** characteristic.
 
 The key characteristic here is the **action**, a string that can represent
 anything.  Indeed the message content could be limited to it if the string
@@ -115,8 +115,8 @@ Message Source
 
 The source of a message has always been a nice to have,
 and it should not be any different here.  The sender, which
-can be a device or a gateway, is considered as another optional characteristic
-in our message model.
+can be a device or a gateway, is therefore considered as
+another optional characteristic in our message model.
 
 Bridging MQTT and the interface
 *******************************
@@ -167,8 +167,7 @@ achieve 2 things:
 The MQTT syntax
 ---------------
 
-The syntax chosen here positions 6 characteristics in the topic and 2 in the
-payload. The topic is structured like this:
+The topic is structured like this:
 
 .. code-block:: none
 
@@ -191,38 +190,37 @@ or the action with the arguments all in a query string style like this:
 	
 where the first ``action`` key is written as is and the other argument keys
 can be chosen by the developer and will be simply copied in the **argument**
-dictionary characteristic.
+dictionary.
 
 The mapping data
 ----------------
 
 The conversion between MQTT keywords and internal ones is based on a simple
-one-to-one relationship table for each of the 5 characteristics (all except
-**type**, **argument** and **source**) .  It ensures that whatever keyword is used in
+one-to-one relationship table for each characteristic (all except
+**type**) .  It ensures that whatever keyword is used in
 the interface code is not affected by any change in the MQTT vocabulary.
 For example, let's assume a location name in the MQTT vocabulary is ``basement``
 and is related to the internal constant ``BASEMENT`` used inside the interface code.
 If for some reason the name in the MQTT vocabulary needs to be changed to
-``lowergroundfloor```, this can be done in the mapping table without touching the
+``lowergroundfloor``, this can be done in the mapping table without touching the
 interface code.  It is a minor feature but it helps to really separate the
 MQTT world from the internal interface.
 
-Currently the mapping data is provided by a simple text file where every line
-contains a one-to-one relationship for a characteristic, with the format:
+Currently the mapping data is provided by a JSON formatted file.  The JSON
+schema ``mqtt_map_schema.json`` is available in the ``gateway`` package.
+New JSON mapping files can be tested against this schema (I use the online
+validation tool https://www.jsonschemavalidator.net/)
+The mapping file also contains the topics to subscribe to and the root token
+for all the topics.
 
-.. code-block:: none
+As the schema shows, all the keyword types can (but do not have to) be mapped:
+function, gateway, location, device, source, action, argument keys and
+argument values.  However, to give more flexibility, there are 3 mapping
+options available for each type:
 
-	characteristic:MQTT_keyword,interface_keyword
-
-The mapping file also contains the topics to subscribe to, in the format:
-
-.. code-block:: none
-
-	topic: whatever/topic/to/subscribe/to
-	topic: another/topic/to/subscribe/to
-
-The order of those lines does not matter.
-
-The default name of the file is the application name followed with the
-``map`` extension, but this can be changed in the configuration as well
-as its location.
+- ``none``: the keywords are left unchanged, so there is no need to provide
+  the mapping data;
+- ``strict``: the conversion of the keywords go through a map, and any missing
+  keyword raises an error, and the corresponding message is probably ignored;
+- ``loose``: like ``strict`` except that missing keywords do not raise any error
+  but are passed unchanged.
