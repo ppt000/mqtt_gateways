@@ -1,8 +1,0 @@
-topic: home/audiovideo/+/+/+/+/C
-topic: home/+/musiccast2mqtt/+/+/+/C
-function: audiovideo, AudioVideo
-function: lighting, Lighting
-gateway: musiccast2mqtt, musiccast2mqtt
-location: office, office
-action: power_on, power_on
-action: power_off, power_off
