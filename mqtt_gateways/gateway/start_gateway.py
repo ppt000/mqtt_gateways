@@ -15,10 +15,11 @@ on to the gateway interface.
 '''
 
 import sys
+import json
 
 import mqtt_gateways.gateway.mqtt_client as mqtt
 import mqtt_gateways.utils.app_properties as app
-import mqtt_gateways.gateway.mqtt_map as mmap
+import mqtt_gateways.gateway.mqtt_map as mqtt_map
 
 from mqtt_gateways.utils.load_config import loadconfig
 from mqtt_gateways.utils.init_logger import initlogger
@@ -84,7 +85,6 @@ def startgateway(gateway_interface):
     emailhost = (cfg.get('LOG', 'host'), cfg.get('LOG', 'port'))
     initlogger(app.Properties.root_logger, app.Properties.name, logfilepath, cfg.getboolean('LOG', 'debug'), emailhost, cfg.get('LOG', 'address'))
     logger = app.Properties.getLogger(__name__)
-#    appHelper.initLogger(appHelper.name, logfilepath, cfg.getboolean('LOG', 'debug'), emailhost, cfg.get('LOG', 'address'))
     # Log the configuration used.
     logger.info('=== APPLICATION STARTED ===')
     logger.info('Configuration:')
@@ -99,24 +99,23 @@ def startgateway(gateway_interface):
     interfaceparams = {} # the parameters for the interface from the configuration file
     for option in cfg.options('INTERFACE'): # read the configuration parameters in a dictionary
         interfaceparams[option] = str(cfg.get('INTERFACE', option))
-    #msglists = [[], []] # pair of message lists
     
     gatewayinterface = gateway_interface(interfaceparams)
     # Load the map data.
     mapfilepath = app.Properties.getPath('.map', cfg.get('MQTT', 'mapfilename'))
     try:
         with open(mapfilepath, 'r') as mapfile:
-            map_data = mapfile.read()
+            #map_data = mapfile.read()
+            map_data = json.load(mapfile)
     except (OSError, IOError) as err:
         raise OSError(''.join(('Error <', str(err), '> with map file <', mapfilepath, '>.')))
-    messagemap = mmap.msgMap(map_data, cfg.get('MQTT', 'root'))
+    messagemap = mqtt_map.msgMap(map_data) # will raise ValueErrors if problems
     # Initialise the dictionary to store parameters and to pass to the callbacks
     localdata = {}
     localdata['connected'] = False #  boolean to indicate connection, to be set in the callbacks
     localdata['timeout'] = cfg.getfloat('MQTT', 'timeout') # for the mqtt loop() method
     localdata['msgmap'] = messagemap
-    localdata['msglist_in'] = mmap.msglist_in
-    # localdata['logger'] = logger # TODO: to remove with implementation of mqtt_client
+    localdata['msglist_in'] = mqtt_map.msglist_in
     localdata['interface'] = gatewayinterface
     # Initialise the MQTT client and connect.
     mqttclient = mqtt.Client(host=cfg.get('MQTT', 'host'),
@@ -141,7 +140,7 @@ def startgateway(gateway_interface):
         gatewayinterface.loop()
         # Publish the messages returned, if any.
         while True:
-            try: internal_msg = mmap.msglist_out.pop(0) # send messages on a FIFO basis
+            try: internal_msg = mqtt_map.msglist_out.pop(0) # send messages on a FIFO basis
             except IndexError: break
             try: mqtt_msg = messagemap.internal2mqtt(internal_msg)
             except ValueError as err:
