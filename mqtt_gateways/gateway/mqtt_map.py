@@ -269,7 +269,7 @@ class msgMap(object):
         mqtt_gateway = self.maps.gateway._i2m(internal_msg.gateway)
         mqtt_location = self.maps.location._i2m(internal_msg.location)
         mqtt_device = self.maps.device._i2m(internal_msg.device)
-        #mqtt_source = self.maps.source._i2m(internal_msg.source)
+        mqtt_source = self.maps.source._i2m(internal_msg.source)
         mqtt_action = self.maps.action._i2m(internal_msg.action)
         mqtt_args = {}
         if internal_msg.arguments is not None:
