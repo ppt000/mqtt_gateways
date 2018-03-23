@@ -1,14 +1,15 @@
 '''This module defines the :class:`cbusInterface` class.'''
 
-import logging
 import re
 import time
-import os.path
 
-from mqtt_gateways.cbus.cbus_serial import cbusSerial, cbusInitError, cbusConnectionError
+import mqtt_gateways.cbus.cbus_serial as cbus_serial
+
 from mqtt_gateways.cbus.cbus_data import FUNCTIONS, ACTIONS, LIGHTS, LEVELS
 
-from mqtt_gateways.gateway.mqtt_map import internalMsg
+import mqtt_gateways.gateway.mqtt_map as mqtt_map
+import mqtt_gateways.utils.app_properties as app
+_logger = app.Properties.getLogger(__name__)
 
 def _checksum(hexstring):
     '''
@@ -49,7 +50,7 @@ _INTERNAL2CBUS = 0
 _CBUS2INTERNAL = 1
 ''' Index for the dictionaries.'''
 
-class cbusInterface(cbusSerial):
+class cbusInterface(cbus_serial.cbusSerial):
     '''
     Represents the higher layer of communication with the C-Bus interface.
 
@@ -62,28 +63,21 @@ class cbusInterface(cbusSerial):
         fullpath (string): full absolute path of the application.
     '''
 
-    def __init__(self, params, msglists, full_path=None):
-
-        if full_path is None: # create NullHandler
-            self._logger = logging.getLogger(__name__)
-            self._logger.addHandler(logging.NullHandler())
-        else: # hook up to the 'root' logger
-            root_name = os.path.splitext(os.path.basename(full_path))[0] # first part of the filename, without extension
-            self._logger = logging.getLogger(''.join((root_name, '.', __name__)))
+    def __init__(self, params):
 
         # Check the params dictionary
         try: dev = params['device']
-        except KeyError: raise cbusInitError('The <device> option is not defined in the configuration file.')
+        except KeyError: raise cbus_serial.cbusInitError('The <device> option is not defined in the configuration file.')
 
-        self._logger.debug(''.join(('Module <', __name__, '> started.')))
+        _logger.debug(''.join(('Module <', __name__, '> started.')))
         # Constructor below might throw an exception. Let it bubble, as it is fatal.
-        super(cbusInterface, self).__init__(dev, full_path)
+        super(cbusInterface, self).__init__(dev)
         self._t0 = time.time()
         self._block = 0
 
         # Outgoing messages list
-        self._msglist_in = msglists[0]
-        self._msglist_out = msglists[1]
+        self._msglist_in = mqtt_map.msglist_in
+        self._msglist_out = mqtt_map.msglist_out
 
         # Build the _functions dictionaries
         self._functions = [FUNCTIONS, {v: k for k, v in FUNCTIONS.items()}]
@@ -135,15 +129,15 @@ class cbusInterface(cbusSerial):
             try: imsg = self._msglist_in.pop(0) # read messages on a FIFO basis
             except IndexError: break
             try: self._execute_command(imsg)
-            except cbusConnectionError as err:
-                if err.trigger: self._logger.critical(err.report)
+            except cbus_serial.cbusConnectionError as err:
+                if err.trigger: _logger.critical(err.report)
         # Launch a status request
         try: self._status_request()
-        except cbusConnectionError as err:
-            if err.trigger: self._logger.critical(err.report)
+        except cbus_serial.cbusConnectionError as err:
+            if err.trigger: _logger.critical(err.report)
         # Read C-Bus system for commands or statuses
         try: self._read_bus()
-        except cbusConnectionError as err: self._logger.info(str(err))
+        except cbus_serial.cbusConnectionError as err: _logger.info(str(err))
 
     def _execute_command(self, imsg):
         '''
@@ -187,7 +181,7 @@ class cbusInterface(cbusSerial):
             if levelcode == '%%': # this is the syntax chosen to say: 'look in the arguments dictionary'.
                 try: levelcode = format(int(imsg.arguments['level'])*255/100, '02X')
                 except (KeyError, ValueError):  # the ValueError is for the int() in case it can not return an int
-                    self._logger.info('No level found for this command.')
+                    _logger.info('No level found for this command.')
                     return
             else: # the level is hardcoded, keep that value.
                 pass
@@ -211,7 +205,7 @@ class cbusInterface(cbusSerial):
         for cbus_cmd in codelist: # send all the messages now
             self.write(''.join(('\x5C053800', cbus_cmd, '\x0D')))
         # send back a confirmation message, same as imsg except that it is a status message
-        ireply = internalMsg(iscmd=False, function=imsg.function,
+        ireply = mqtt_map.internalMsg(iscmd=False, function=imsg.function,
                              gateway=imsg.gateway, location=imsg.location,
                              device=imsg.device, action=imsg.action, arguments=imsg.arguments)
         self._msglist_out.append(ireply)
@@ -255,29 +249,29 @@ class cbusInterface(cbusSerial):
         if code == '': return # if there are any errors at the lower level, we simply do nothing
         # the 'code' should have at least one character and the <cr><lf> sequence at the end.
         if len(code) < 3:
-            self._logger.info(''.join(('Code <', code, '> is too short!')))
+            _logger.info(''.join(('Code <', code, '> is too short!')))
             return
         # test and remove <cr><lf> at the end; useful only if 'code' was not read with a 'readline()'.
         if code[-2:] != '\r\n':
-            self._logger.info(''.join(('Code <', code, '> not ending in <cr><lf>.')))
+            _logger.info(''.join(('Code <', code, '> not ending in <cr><lf>.')))
             return
         code = code[:-2]
         # check special sequences first
         if code == '!': # The PCI cannot accept the (latest?) command
-            self._logger.info('Character <!> returned') # no processing for now, skip
+            _logger.info('Character <!> returned') # no processing for now, skip
             return
         if ((code[-1:] == '+') or (code == '==')): # there has been a Power Up or a Parameter Change
-            self._logger.debug('PUN or PCN detected')
+            _logger.debug('PUN or PCN detected')
             try: self.init_pci_options()
-            except cbusInitError: raise # TODO: do something else here rather than crash?
+            except cbus_serial.cbusInitError: raise # TODO: do something else here rather than crash?
             return
         # Now the 'code' should be an hexadecimal string (pairs of hex chars) ending with a check_sum
         if len(code) < 4:
-            self._logger.info(''.join(('Code <', code, '> is too short!')))
+            _logger.info(''.join(('Code <', code, '> is too short!')))
             return
         # check checksum and remove it from code
         if not _checksum(code):
-            self._logger.info(''.join(('Code <', code, '> has the wrong check_sum.')))
+            _logger.info(''.join(('Code <', code, '> has the wrong check_sum.')))
             return
         code = code[:-2]
 
@@ -286,23 +280,23 @@ class cbusInterface(cbusSerial):
         # test for Monitored SAL message, which is a command sent internally within C-Bus
         match = re.search(_PATTERN_MonitoredSAL, code)
         if match:
-            self._logger.debug(''.join(('Received Monitored SAL message <', code, '>.')))
+            _logger.debug(''.join(('Received Monitored SAL message <', code, '>.')))
             application_byte = '38' # this is already determined by the pattern
             source_address = match.group(1) # the source is the device that sent the command originally
             remaining_code = match.group(2)
             while remaining_code != '': # will always run once given the regex pattern
                 if len(remaining_code) < 2:
-                    self._logger.info(''.join(('Code <', code, '> too short. Skip message.')))
+                    _logger.info(''.join(('Code <', code, '> too short. Skip message.')))
                     return
                 action_byte = remaining_code[0:2]
                 remaining_code = remaining_code[2:]
                 argnum = int(action_byte, 16) & 7 # Compute the number of arguments from the last 3 bits (see C-Bus doc)
                 if len(remaining_code) < (argnum*2):
-                    self._logger.info(''.join(('Code <', code, '> too short, not enough arguments. Skip message')))
+                    _logger.info(''.join(('Code <', code, '> too short, not enough arguments. Skip message')))
                     return
                 if argnum < 1 or argnum > _MAXARGNUMBER:
                     # this should never happen as we write the CBUS_COMMANDS table ourselves...
-                    self._logger.info(''.join(('Unexpected number of arguments in code <', code, '>. Skip message.')))
+                    _logger.info(''.join(('Unexpected number of arguments in code <', code, '>. Skip message.')))
                     return
                 destination_address = remaining_code[0:2]
                 remaining_code = remaining_code[2:]
@@ -315,42 +309,42 @@ class cbusInterface(cbusSerial):
             # test for CAL Reply message
             match = re.search(_PATTERN_CALReply, code)
             if match:
-                self._logger.debug(''.join(('Received CAL Reply message <', code, '>.')))
+                _logger.debug(''.join(('Received CAL Reply message <', code, '>.')))
                 # This is a CAL Reply to a status request; create a list of status messages of type '02' (RAMP:0S:LVL$)
                 application_byte = '38' # defined by the pattern
                 source_address = '0A' # defined by the pattern
                 reply_length = ((int(match.group(1), 16)-224)*2)-6 # number of characters in remaining_code, if correct
                 destination_address = match.group(2) # Block start
                 remaining_code = match.group(3)
-                #self._logger.debug(''.join(('The match groups are reply length <',match.group(1),'>,
+                #_logger.debug(''.join(('The match groups are reply length <',match.group(1),'>,
                 # block start <',match.group(2),'> and code <',match.group(3),'>.')))
                 if len(remaining_code) != reply_length: # maybe unnecessary
-                    self._logger.info('The reply_length byte does not match the code. Skip message.')
+                    _logger.info('The reply_length byte does not match the code. Skip message.')
                     return
                 while remaining_code != '': # will always run once given the regex pattern
                     if len(remaining_code) < 4:
-                        self._logger.info(''.join(('Code <', code, '> too short. Skip message.')))
+                        _logger.info(''.join(('Code <', code, '> too short. Skip message.')))
                         return
                     # decode the level according to documentation
                     action_byte = '02'
                     if remaining_code[0:4] == '0000':
                         if destination_address in self._lights[_CBUS2INTERNAL]:
                             # the unit exists so the code should not be '0000'
-                            self._logger.info(''.join(('Light <',
+                            _logger.info(''.join(('Light <',
                                                        self._lights[_CBUS2INTERNAL][destination_address],
                                                        '> is unexpectedly offline. Check the fuses.')))
                     else: # the remaining code should be a proper level code
                         try:
                             level_byte = ''.join((LEVELS[remaining_code[2:4]], LEVELS[remaining_code[0:2]]))
                         except KeyError:
-                            self._logger.info(''.join(('Level <', remaining_code[0:4],
+                            _logger.info(''.join(('Level <', remaining_code[0:4],
                                                        '> not recognised. Skip message.')))
                             return
                         cmdlist.append([application_byte, action_byte, level_byte, destination_address, source_address])
                     remaining_code = remaining_code[4:]
                     destination_address = '%0.2X' % (int(destination_address, 16) + 1) # increment the address
             else:  # the message is not recognised
-                self._logger.info(''.join(('Code <', code, '> does not match pattern. Skip message.')))
+                _logger.info(''.join(('Code <', code, '> does not match pattern. Skip message.')))
                 return
 
         #=======================================================================
@@ -367,7 +361,7 @@ class cbusInterface(cbusSerial):
         for com in cmdlist:
             try: fct = self._functions[_CBUS2INTERNAL][com[0]]
             except KeyError:
-                self._logger.info(''.join(('Unrecognised function code <', com[0], '>. Skip message.')))
+                _logger.info(''.join(('Unrecognised function code <', com[0], '>. Skip message.')))
                 return
 
             # substitute commands '0200' and '02FF' with '01' and 'FF' (LIGHT_LVL into LIGHT_ON or LIGHT_OFF)
@@ -377,29 +371,29 @@ class cbusInterface(cbusSerial):
 
             try: act = self._actions[_CBUS2INTERNAL][com[1]]
             except KeyError:
-                self._logger.info(''.join(('Unrecognised action code <', com[1], '>. Skip message.')))
+                _logger.info(''.join(('Unrecognised action code <', com[1], '>. Skip message.')))
                 return
 
             try: dev = self._lights[_CBUS2INTERNAL][com[3]]
             except KeyError:
-                self._logger.info(''.join(('Unrecognised device code <', com[3], '>. Skip message.')))
+                _logger.info(''.join(('Unrecognised device code <', com[3], '>. Skip message.')))
                 return
 
             #===================================================================
             # try: loc = self._locations[_CBUS2INTERNAL][com[3]]
             # except KeyError:
-            #     self._logger.info(''.join(('Unrecognised location code <', com[3],'>. Skip message.')))
+            #     _logger.info(''.join(('Unrecognised location code <', com[3],'>. Skip message.')))
             #     return
             #===================================================================
 
             if com[2] == '': args = {}
             else: args = {'level': str(int(com[2], 16)*100/255)}
 
-            imsg = internalMsg(function=fct,
+            imsg = mqtt_map.internalMsg(function=fct,
                                iscmd=False, # they are all status messages
                                location='',
                                device=dev,
                                action=act,
                                arguments=args)
             self._msglist_out.append(imsg)
-            self._logger.debug(''.join(('Message stacked with action <', act, '> to device <', dev, '>.')))
+            _logger.debug(''.join(('Message stacked with action <', act, '> to device <', dev, '>.')))

@@ -17,8 +17,8 @@ As a reminder, we define the MQTT syntax as follows:
 
 from collections import namedtuple
 import paho.mqtt.client as mqtt
-from mqtt_gateways.utils.app_helper import appHelper
-_logger = appHelper.getLogger(__name__)
+import mqtt_gateways.utils.app_properties as app
+_logger = app.Properties.getLogger(__name__)
 
 class internalMsg(object):
     '''
@@ -38,6 +38,7 @@ class internalMsg(object):
 
     def __init__(self, iscmd=False, function=None, gateway=None,
                  location=None, device=None, source=None, action=None, arguments=None):
+        _logger = app.Properties.getLogger(__name__)
         self.iscmd = iscmd
         self.function = function
         self.gateway = gateway
@@ -82,6 +83,9 @@ class internalMsg(object):
         self.arguments['reason'] = reason
         return self
 
+msglist_in = []
+msglist_out = []
+
 MappedFields = namedtuple('MappedFields', ('function', 'gateway', 'location',
                                            'device', 'source', 'action',
                                            'argkey', 'argvalue'))
@@ -118,12 +122,19 @@ class msgMap(object):
                 self.m2i_dict = None
                 self.i2m_dict = None
                 self.mapfunc = self._mapnone # by default with no maps
+                self.maptype = 'none'
             else:
                 self.m2i_dict = mapdict 
                 self.i2m_dict = {v: k for k, v in mapdict.iteritems()} # inverse dictionary
-                if maptype == 'loose': self.mapfunc = self._maploose
-                elif maptype == 'strict': self.mapfunc = self._mapstrict
-                else: self.mapfunc = self._mapnone # by default if unknown maptype
+                if maptype == 'loose':
+                    self.mapfunc = self._maploose
+                    self.maptype = maptype
+                elif maptype == 'strict':
+                    self.mapfunc = self._mapstrict
+                    self.maptype = maptype
+                else:
+                    self.mapfunc = self._mapnone # by default if unknown maptype
+                    self.maptype = 'none'
 
         def _m2i(self, mqtt_token):
             return self.mapfunc(mqtt_token, self.m2i_dict)
@@ -150,7 +161,7 @@ class msgMap(object):
             except KeyError: raise ValueError(''.join(('not found')))
 
     def __init__(self, jsondict):
-        self._source = appHelper.app_name
+        self._source = app.Properties.name
         try: self._root = jsondict['root']
         except KeyError: raise ValueError('JSON file has no object <root>.')
         try: self.topics = jsondict['topics']

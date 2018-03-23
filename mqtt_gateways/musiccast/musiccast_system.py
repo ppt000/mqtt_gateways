@@ -5,11 +5,12 @@ Representation of the Audio-Video system state.
 import json
 from collections import namedtuple
 
-from mqtt_gateways.musiccast.musiccast_http import musiccastHttp
-from mqtt_gateways.musiccast.musiccast_data import transform_arg
-from mqtt_gateways.musiccast.musiccast_exceptions import *
-from mqtt_gateways.utils.app_helper import appHelper
-from mqtt_gateways.gateway.mqtt_map import internalMsg
+import mqtt_gateways.musiccast.musiccast_http as mchttp
+import mqtt_gateways.musiccast.musiccast_data as mcdata
+import mqtt_gateways.musiccast.musiccast_exceptions as mcx
+
+import mqtt_gateways.utils.app_properties as app
+_logger = app.Properties.getLogger(__name__)
 
 # Records for the devices data
 Root = namedtuple('Root', ('devices'))
@@ -26,23 +27,22 @@ class System(object):
     in the dictionary, which is what we want for devices that are 'pure players' but
     still have a zone definition in MusicCast for some of the commands. '''
     def __init__(self, jsonfilepath):
-        self._logger = appHelper.getLogger(__name__)
         # load the static data about the devices; errors are fatal.
         try:
             with open(jsonfilepath, 'r') as json_file:
                 json_data = json.load(json_file)
         except (IOError, OSError):
-            self._logger.critical(''.join(('Can''t open ', jsonfilepath, '. Abort.')))
+            _logger.critical(''.join(('Can''t open ', jsonfilepath, '. Abort.')))
             raise
         except ValueError:
-            self._logger.critical(''.join(('Can''t JSON-parse ', jsonfilepath, '. Abort.')))
+            _logger.critical(''.join(('Can''t JSON-parse ', jsonfilepath, '. Abort.')))
             raise
         # change the dictionaries into namedtuples, just to be clear that this data is immutable
         # also this process ensures all the required fields are present, event if set to None
         try:
             self.data = self._unpack_dicts(json_data, 'root')
         except StandardError:
-            self._logger.critical('Something went wrong unpacking the JSON data. Abort.')
+            _logger.critical('Something went wrong unpacking the JSON data. Abort.')
             raise
         # initialise the _NullDevice
         #_NullDevice = Device(DeviceData('NullDevice', '', '', '', '', [], [], []))
@@ -60,7 +60,7 @@ class System(object):
                 found = [x for x in self.devices if x.data.id == feed.data.device_id]
                 if found: feed.device = found[0]
                 else: # device for that feed was not found
-                    self._logger.info(''.join(('Device ', feed.data.device_id, ' not defined.')))
+                    _logger.info(''.join(('Device ', feed.data.device_id, ' not defined.')))
                     feed.device = None # _NullDevice
         # identify the devices that have MusicCast enabled feeds connected to them
         for dev in self.devices:
@@ -91,7 +91,7 @@ class Device(object):
     ''' docstring '''
 
     def __init__(self, device_data):
-        self._logger = appHelper.getLogger(__name__)
+        _logger = app.Properties.getLogger(__name__)
         #if device_data is None: # allocate to NullDevice
         #    self.data = _NullDevice # DeviceData('NullDevice', '', '', '', '', [], [], [])
         #else:
@@ -106,10 +106,10 @@ class Device(object):
     def init_musiccast(self):
         if self.musiccast:  # this is a MusicCast device
             self.online = False
-            self.connection = musiccastHttp(self.data.host)
+            self.connection = mchttp.musiccastHttp(self.data.host)
             self.features = {}
             try: self.refresh_features()
-            except mcError: pass # TODO: refine
+            except mcx.mcError: pass # TODO: refine
         for zone in self.zones:
             zone.init_musiccast()
 
@@ -121,7 +121,7 @@ class Device(object):
 class Feed(object):
     ''' docstring '''
     def __init__(self, feed_data):
-        self._logger = appHelper.getLogger(__name__)
+        _logger = app.Properties.getLogger(__name__)
         self.data = feed_data
         self.device = None
 
@@ -134,7 +134,7 @@ class Zone(object):
     response = {}
     
     def __init__(self, zone_data, device):
-        self._logger = appHelper.getLogger(__name__)
+        _logger = app.Properties.getLogger(__name__)
         self.data = zone_data
         self.device = device
         self.zonesource = None
@@ -150,12 +150,12 @@ class Zone(object):
         # check first if features is updated
         if not self.device.features:
             try: self.device.refresh_features()
-            except mcError as err:
-                raise mcDeviceError(''.join(('The getFeatures structure can not updated.\n\t Error:', repr(err))))
+            except mcx.mcError as err:
+                raise mcx.mcDeviceError(''.join(('The getFeatures structure can not updated.\n\t Error:', repr(err))))
         # find the zone in features
         fzone = [zone for zone in self.device.features['zone'] if zone['id'] == self.data.id]
         if not fzone:
-            raise mcConfigError(''.join(('Zone ', self.data.id, ' in device ',
+            raise mcx.mcConfigError(''.join(('Zone ', self.data.id, ' in device ',
                                          self.device.data.id, 'not found in getFeatures.')))
         frange = [item for item in fzone[0]['range_step'] if item['id'] == 'volume'][0] # find the volume range
         self.volume_range = frange['max'] - frange['min']
@@ -163,8 +163,8 @@ class Zone(object):
         self.volume_step = frange['step']
         # Initialise fields with a 'getStatus'call
         try: status = self.device.connection.sendrequest(self.data.mc_id, 'getStatus')
-        except mcError as err:
-            raise mcDeviceError(''.join(('The getStatus information can not be retrieved.\n\t Error:', repr(err))))
+        except mcx.mcError as err:
+            raise mcx.mcDeviceError(''.join(('The getStatus information can not be retrieved.\n\t Error:', repr(err))))
         self.state['power'] = (status['power'] == 'on')
         self.state['input'] = status['input']
         self.state['volume'] = int(status['volume'] * 100 / self.volume_range)
@@ -188,13 +188,13 @@ class Zone(object):
         for arg in msg.arguments:
             # retrieve the function that transforms the argument from the
             # internal representation to the MusicCast one.
-            try: func = transform_arg[arg]
+            try: func = mcdata.transform_arg[arg]
             except KeyError:
-                self._logger.info(''.join(('Argument ', str(arg), ' does not have a transformation. Discard.')))
+                _logger.info(''.join(('Argument ', str(arg), ' does not have a transformation. Discard.')))
                 continue # ignore the argument if there is no transformation for it
             try: mc_arg = func(self, msg.arguments[arg]) # TODO: remove the 'self' and make this method static
             except ValueError: # this is probably the only error to catch from a transformation
-                self._logger.info(''.join(('Value ', str(msg.arguments[arg]), ' of argument ',
+                _logger.info(''.join(('Value ', str(msg.arguments[arg]), ' of argument ',
                                            str(arg), ' seems of the wrong type. Discard.')))
                 continue # ignore the argument as it is probably badly formatted
             Zone.arguments[arg] = [msg.arguments[arg], mc_arg]
@@ -202,7 +202,7 @@ class Zone(object):
     def send_command(self, command, qualifier=None):
         Zone.response.clear()
         if qualifier is None: qualifier = self.data.mc_id
-        self._logger.debug(''.join(('send_command to device ', self.device.data.id)))
+        _logger.debug(''.join(('send_command to device ', self.device.data.id)))
         Zone.response = self.device.connection.sendrequest(qualifier, command)
         return
 
@@ -210,13 +210,13 @@ class Zone(object):
         imsg = Zone.msgin.copy()
         imsg.gateway = None
         imsg.device = self.device.data.id
-        imsg.source = appHelper.app_name
+        imsg.source = app.Properties.name
         Zone.msgl_out.append(imsg.reply(response, reason))
         return
 
     def set_power(self, power):
         ''' Sets the power of the zone.'''
-        if not self.device.musiccast: raise mcLogicError(''.join(('The device ', self.device.data.id, ' is not MusicCast.')))
+        if not self.device.musiccast: raise mcx.mcLogicError(''.join(('The device ', self.device.data.id, ' is not MusicCast.')))
         cmdtxt = 'setPower?power={}'.format('on' if power else 'standby')
         self.send_command(cmdtxt)
         self.state['power'] = power
@@ -225,8 +225,8 @@ class Zone(object):
 
     def set_volume(self, up=None):
         ''' Sets the volume of the zone.'''
-        if not self.device.musiccast: raise mcLogicError(''.join(('The device ', self.device.data.id, ' is not MusicCast.')))
-        if not self.state['power']: raise mcLogicError(''.join(('The device ', self.device.data.id, ' is not turned on.')))
+        if not self.device.musiccast: raise mcx.mcLogicError(''.join(('The device ', self.device.data.id, ' is not MusicCast.')))
+        if not self.state['power']: raise mcx.mcLogicError(''.join(('The device ', self.device.data.id, ' is not turned on.')))
         if up is None:
             volume = max(min(Zone.arguments['volume'][1], self.volume_min), (self.volume_min + self.volume_range))
             self.send_command(''.join(('setVolume?volume=', str(volume))))
@@ -240,8 +240,8 @@ class Zone(object):
 
     def set_mute(self, mute=None):
         ''' Sets the mute of the zone.'''
-        if not self.device.musiccast: raise mcLogicError(''.join(('The device ', self.device.data.id, ' is not MusicCast.')))
-        if not self.state['power']: raise mcLogicError(''.join(('The device ', self.device.data.id, ' is not turned on.')))
+        if not self.device.musiccast: raise mcx.mcLogicError(''.join(('The device ', self.device.data.id, ' is not MusicCast.')))
+        if not self.state['power']: raise mcx.mcLogicError(''.join(('The device ', self.device.data.id, ' is not turned on.')))
         self.send_command(''.join(('setMute?enable=', 'true' if mute else 'false')))
         self.state['mute'] = mute
         self.send_reply('OK', ''.join(('mute is ', 'on' if mute else 'off')))
@@ -255,13 +255,13 @@ class Zone(object):
         or not.  No other action is performed, so if for example the input is a source
         on the same device and it needs to be started or tuned, this is not done here.
         '''
-        if not self.device.musiccast: raise mcLogicError(''.join(('The device ', self.device.data.id, ' is not MusicCast.')))
-        if not self.state['power']: raise mcLogicError(''.join(('The device ', self.device.data.id, ' is not turned on.')))
+        if not self.device.musiccast: raise mcx.mcLogicError(''.join(('The device ', self.device.data.id, ' is not MusicCast.')))
+        if not self.state['power']: raise mcx.mcLogicError(''.join(('The device ', self.device.data.id, ' is not turned on.')))
         if input_kwd is None: # check if the source is specified in the arguments dictionary
             try: input_args = Zone.arguments['input'] # source_args = [internal keyword, MusicCast keyword]
-            except KeyError: raise mcSyntaxError('No input argument found in command.')
+            except KeyError: raise mcx.mcSyntaxError('No input argument found in command.')
             input_mckwd = input_args[1]
-        else: input_mckwd = transform_arg['input'](self, input_kwd)
+        else: input_mckwd = mcdata.transform_arg['input'](self, input_kwd)
         self.send_command(''.join(('setInput?input=', input_mckwd)))
         self.state['input'] = input_mckwd
         self.send_reply('OK', ''.join(('input is ', input_mckwd)))
@@ -281,7 +281,7 @@ class Zone(object):
         '''
         if source_kwd is None: # check if the source is specified in the arguments dictionary
             try: source_args = Zone.arguments['source'] # source_args = [internal keyword, MusicCast keyword]
-            except KeyError: raise mcSyntaxError('No source argument found.')
+            except KeyError: raise mcx.mcSyntaxError('No source argument found.')
             source_kwd = source_args[0]
         # check if the wanted source is available on the same device
         for source in self.device.data.sources:
@@ -293,12 +293,12 @@ class Zone(object):
                     #self.send_reply('OK', '') # the reply is already sent by set_input
                     return
                 else: # the current device also plays the source but it is not MusicCast
-                    raise mcLogicError(''.join(('Can''t set source ', source_kwd, ' on non MusicCast device ', self.device.data.id)))
+                    raise mcx.mcLogicError(''.join(('Can''t set source ', source_kwd, ' on non MusicCast device ', self.device.data.id)))
         # source not found on the same device, look for it in all devices connected to the feeds
         devicelist = [feed.device for feed in self.device.feeds for source in feed.device.data.sources if source.id == source_kwd]
         # devicelist is a list of all devices who have a source which is source_kwd
         if not devicelist: # there are no devices that can play this source
-            raise mcError(''.join(('Source ', source_kwd,
+            raise mcx.mcError(''.join(('Source ', source_kwd,
                                    ' cannot be found anywhere.\n\tCould be a syntax issue or a configuration issue.')))
         mc_devicelist = [device for device in devicelist if device.musiccast]
         # mc_devicelist is the sub-list of MusicCast devices only
@@ -323,7 +323,7 @@ class Zone(object):
                 pass
             else:
                 # one could adapt the message depending if all MusicCast are busy or non-existent here...
-                raise mcError(''.join(('Source ', source_kwd, ' cannot be played by any available MusicCast device.')))
+                raise mcx.mcError(''.join(('Source ', source_kwd, ' cannot be played by any available MusicCast device.')))
         else: # send the commands to the zone found that plays the source
             self.zonesource = foundzone
             if not foundzone.state['power']: # only send commands if the zone is not already playing
@@ -338,16 +338,16 @@ class Zone(object):
 
     def set_playback(self, action, source_kwd=None):
         if not self.zonesource:
-            raise mcLogicError(''.join(('No zonesource defined in zone ', self.data.id, ' of device ', self.device.data.id)))
+            raise mcx.mcLogicError(''.join(('No zonesource defined in zone ', self.data.id, ' of device ', self.device.data.id)))
         zone = self.zonesource
-        if not zone.device.musiccast: raise mcLogicError(''.join(('The device ', zone.device.data.id, ' is not MusicCast.')))
+        if not zone.device.musiccast: raise mcx.mcLogicError(''.join(('The device ', zone.device.data.id, ' is not MusicCast.')))
         if not zone.state['power']:
-            raise mcLogicError(''.join(('The device ', zone.device.data.id, ' is not turned on.')))
+            raise mcx.mcLogicError(''.join(('The device ', zone.device.data.id, ' is not turned on.')))
         if source_kwd is None: source_mcid = zone.state['input']
         else:
-            source_mcid = transform_arg['input'](zone, source_kwd)
+            source_mcid = mcdata.transform_arg['input'](zone, source_kwd)
         if source_mcid != zone.state['input']:
-            raise mcError(''.join(('Can''t execute action ', action, ' for source ', source_kwd,
+            raise mcx.mcError(''.join(('Can''t execute action ', action, ' for source ', source_kwd,
                                    ' while device ', zone.device.data.id,
                                    ' is playing input ', zone.state['input'])))
         zone.send_command(''.join(('setPlayback?playback=', action)), source_mcid)
@@ -360,31 +360,31 @@ class Zone(object):
         '''
         if source_mcid not in ('tuner', 'net_radio'): return
         if not self.zonesource:
-            raise mcLogicError(''.join(('No zonesource defined in zone ', self.data.id, ' of device ', self.device.data.id)))
+            raise mcx.mcLogicError(''.join(('No zonesource defined in zone ', self.data.id, ' of device ', self.device.data.id)))
         zone = self.zonesource
-        if not zone.device.musiccast: raise mcLogicError(''.join(('The device ', zone.device.data.id, ' is not MusicCast.')))
+        if not zone.device.musiccast: raise mcx.mcLogicError(''.join(('The device ', zone.device.data.id, ' is not MusicCast.')))
         if not zone.state['power']:
-            raise mcLogicError(''.join(('The device ', zone.device.data.id, ' is not turned on.')))
+            raise mcx.mcLogicError(''.join(('The device ', zone.device.data.id, ' is not turned on.')))
         if zone.state['input'] != source_mcid:
-            raise mcError(''.join(('Can''t preset tuner while device ', zone.device.data.id,
+            raise mcx.mcError(''.join(('Can''t preset tuner while device ', zone.device.data.id,
                                    ' is playing input ', zone.state['input'])))
         if source_mcid == 'tuner':
             try: preset_type = zone.device.features['tuner']['preset']['type']
-            except KeyError: raise mcConfigError('Can''t read the tuner preset type in the features.')
+            except KeyError: raise mcx.mcConfigError('Can''t read the tuner preset type in the features.')
             if preset_type == 'common': band = 'common'
             elif preset_type == 'separate': band = 'dab' # for now that's the only preset we want to use. TODO: refine.
-            else: raise mcDeviceError(''.join(('Unknown preset type ', preset_type)))
+            else: raise mcx.mcDeviceError(''.join(('Unknown preset type ', preset_type)))
             bandtxt = '&band={}'.format(band)
             qualifier = 'tuner'
         else:
             bandtxt = ''
             qualifier = 'netusb'
         try: max_presets = int(zone.device.features[qualifier]['preset']['num'])
-        except (ValueError, KeyError): raise mcConfigError('Can''t read the tuner max presets in the features.')
+        except (ValueError, KeyError): raise mcx.mcConfigError('Can''t read the tuner max presets in the features.')
         try: preset_num = Zone.arguments['preset'][0] # preset_num = [internal keyword (int), MusicCast keyword (str)]
-        except KeyError: raise mcSyntaxError('No preset argument found.')
+        except KeyError: raise mcx.mcSyntaxError('No preset argument found.')
         if preset_num < 1 or preset_num > max_presets:
-            raise mcLogicError(''.join(('Preset ', str(preset_num), ' is out of range.')))
+            raise mcx.mcLogicError(''.join(('Preset ', str(preset_num), ' is out of range.')))
         cmdtxt = 'recallPreset?zone={}{}&num={:d}'.format(zone.data.id, bandtxt, preset_num)
         zone.send_command(cmdtxt, qualifier)
         zone.send_reply('OK', ''.join(('preset ', source_mcid, ' to number ', str(preset_num))))

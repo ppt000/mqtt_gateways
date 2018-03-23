@@ -2,14 +2,15 @@
 communication layer with the C-Bus PCI serial interface.
 '''
 
-import logging
 import time
-import os.path
 import string
 
 import serial
 
-from mqtt_gateways.utils.exception_throttled import ThrottledException
+import mqtt_gateways.utils.throttled_exception as thrx
+
+import mqtt_gateways.utils.app_properties as app
+_logger = app.Properties.getLogger(__name__)
 
 _MYPRINTABLE = ''.join((string.digits, string.letters, string.punctuation))
 
@@ -63,7 +64,7 @@ class cbusInitError(Exception):
     pass
 
 # pylint: disable=too-few-public-methods
-class cbusConnectionError(ThrottledException):
+class cbusConnectionError(thrx.ThrottledException):
     '''Connection Error for the Serial Interface.'''
     def __init__(self, msg=None):
         super(cbusConnectionError, self).__init__(msg, throttlelag=_THROTTLELAG, module_name=__name__)
@@ -98,15 +99,8 @@ class cbusSerial(serial.Serial):
         cbusInitError: if the serial interface can not be opened.
     '''
 
-    def __init__(self, port, full_path=None):
-        if full_path is None: # create NullHandler
-            self._logger = logging.getLogger(__name__)
-            self._logger.addHandler(logging.NullHandler())
-        else: # hook up to the 'root' logger
-            root_name = os.path.splitext(os.path.basename(full_path))[0] # first part of the filename, without extension
-            self._logger = logging.getLogger(''.join((root_name, '.', __name__)))
-
-        self._logger.debug(''.join(('Module <', __name__, '> started.')))
+    def __init__(self, port):
+        _logger.debug(''.join(('Module <', __name__, '> started.')))
         try:
             super(cbusSerial, self).__init__(port, baudrate=9600, bytesize=serial.EIGHTBITS,
                                              parity=serial.PARITY_NONE, stopbits=serial.STOPBITS_ONE,
@@ -131,7 +125,7 @@ class cbusSerial(serial.Serial):
             data = super(cbusSerial, self).readline()
         except serial.SerialException:
             raise cbusConnectionError('readline on C-Bus reported a SerialException.')
-        if data != '': self._logger.debug(''.join(('Reading <', _s2p(data), '> from serial interface.')))
+        if data != '': _logger.debug(''.join(('Reading <', _s2p(data), '> from serial interface.')))
         return data
 
     def write(self, code):
@@ -148,7 +142,7 @@ class cbusSerial(serial.Serial):
             cbusConnectionError: if there are any problems during the writing process
         '''
         if code == '': return 0
-        self._logger.debug(''.join(('Writing code <', _s2p(code), '> to serial interface.')))
+        _logger.debug(''.join(('Writing code <', _s2p(code), '> to serial interface.')))
         try:
             nbytes = super(cbusSerial, self).write(code)
         except serial.SerialException:
@@ -183,13 +177,13 @@ class cbusSerial(serial.Serial):
             time.sleep(_PAUSE)
             data = self.readline().strip()
             if data == req[2]: # reply as expected
-                self._logger.debug(''.join((req[0], ' has already the right parameters set.')))
+                _logger.debug(''.join((req[0], ' has already the right parameters set.')))
             else: # not the reply expected
                 self.write(''.join((req[3], '\x0D'))) # send the Set Command code
                 time.sleep(_PAUSE)
                 data = self.readline().strip()
                 if data[:len(req[4])] == req[4]: # acknowledge as expected; the index in data removes the echo
-                    self._logger.debug(''.join(('Settings change request for ', req[0], ' has been acknowledged.')))
+                    _logger.debug(''.join(('Settings change request for ', req[0], ' has been acknowledged.')))
                 else: # not the acknowledge expected
                     self.close() # there is a problem with the serial interface, close it
                     raise cbusInitError(''.join(('Problem with Serial Interface setting parameters for ', req[0])))
