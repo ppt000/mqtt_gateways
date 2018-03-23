@@ -3,6 +3,8 @@ Function to initialise the 'root' logger with pre-defined handlers.
 
 Usage (from the main script):
 
+TODO: change the following import example
+
 .. code-block:: none
 
     from init_logger import initlogger
