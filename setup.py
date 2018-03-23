@@ -7,7 +7,7 @@ Created on 16 Nov 2017
 from setuptools import setup
 setup(
     name='mqtt_gateways',
-    version='0.1',
+    version='0.2',
     package_dir={'':'mqtt_gateways'},
     packages=['gateway','dummy'],
     install_requires=['paho-mqtt >= 1.3','pySerial >= 3.4'],
@@ -21,5 +21,5 @@ setup(
     description='Framework for MQTT Gateways',
     license='MIT',
     keywords='mqtt gateway',
-    url='http://empiluma.com/mqtt_gateways/',
+    url='http://mqtt-gateways.readthedocs.io/en/latest/',
 )
