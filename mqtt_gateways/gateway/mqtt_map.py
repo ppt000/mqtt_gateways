@@ -90,6 +90,19 @@ MappedFields = namedtuple('MappedFields', ('function', 'gateway', 'location',
                                            'device', 'source', 'action',
                                            'argkey', 'argvalue'))
 
+NO_MAP = {
+  "root": "",
+  "topics": [],
+  "function": {"maptype": "none"},
+  "gateway": {"maptype": "none"},
+  "location": {"maptype": "none"},
+  "device": {"maptype": "none"},
+  "source": {"maptype": "none"},
+  "action": {"maptype": "none"},
+  "argkey": {"maptype": "none"},
+  "argvalue": {"maptype": "none"}
+}
+
 class msgMap(object):
     '''
     Contains the mapping data and the conversion methods.
@@ -158,9 +171,10 @@ class msgMap(object):
         def _mapstrict(token, dico):
             if token is None: return None
             try: return dico[token]
-            except KeyError: raise ValueError(''.join(('not found')))
+            except KeyError: raise ValueError(''.join(('Token ', token, ' not found.')))
 
     def __init__(self, jsondict):
+        if not jsondict: jsondict = NO_MAP
         self._source = app.Properties.name
         try: self._root = jsondict['root']
         except KeyError: raise ValueError('JSON file has no object <root>.')

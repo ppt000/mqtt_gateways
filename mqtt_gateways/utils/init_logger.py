@@ -1,57 +1,44 @@
 '''
-Function to initialise the 'root' logger with pre-defined handlers.
-
-Usage (from the main script):
-
-TODO: change the following import example
-
-.. code-block:: none
-
-    from init_logger import initlogger
-    
-    # Use the name of the application as 'module_name':
-    logger = logging.getLogger('module_name')
-    initlogger(logger, 'module_name' , filepath, [log_debug])
-
+Function to initialise a logger with pre-defined handlers.
 '''
 
 import logging.handlers
-import socket
 
-def initlogger(logger, log_id, log_filepath=None, log_debug=False,
-               email_host=None, email_address=None):
+def initlogger(logger, logfiledata, emaildata):
     '''
     The logger passed as parameter should be sent by the 'root' module if
     hierarchical logging is the objective. The logger is then initialised with
     the following handlers:
 
-    - the standard 'Stream' handler will always log level ERROR and above;
+    - the standard 'Stream' handler will always log level WARN and above;
     - a rotating file handler, with fixed parameters (max 50kB, 3 rollover
       files); the level for this handler is DEBUG if the parameter 'log_debug' is
       True, INFO otherwise; the file name for this log is given by the
       log_filepath parameter which is used as is; an error message is logged in
       the standard handler if there was a problem creating the file;
-    - an email handler with the level set to ERROR;
+    - an email handler with the level set to CRITICAL;
 
     Args:
         logger: the actual logger object to be initialised;
-        log_id (string): identifies the logger, ideally the name of the
-            calling module;
-        log_filepath (string): the log file path, used 'as is';
-            if it is relative, no guarantee is made of where it actually points to;
-        log_debug (boolean): a flag to indicate if DEBUG logging is required, or only
-            INFO;
-        email_host (string): host of the email server in the form of a tuple (host, port);
-        email_address (string): email address where to send the messages.
+        logfiledata (tuple): [0] = logfilepath (string): the log file path,
+                                   if None, file logging is disabled;
+                             [1] = log_debug (boolean): a flag to indicate
+                                   if DEBUG logging is required, or only INFO;
+        emaildata (tuple): [0] = host (string),
+                           [1] = port (int),
+                           [2] = address (string),
+                                 if either of those 3 values are None or empty,
+                                 no email logging is enabled;
+                           [3] = app_name (string).
 
     Returns:
         Nothing
 
     Raises:
-        any IOErrors thrown by file handling methods are caught, but smtp
-            methods might produce exceptions that are not caught for now.
+        any IOErrors thrown by file handling methods are caught.
     '''
-    logger.setLevel(logging.DEBUG if log_debug else logging.INFO)
+    log_level = logging.INFO
+    logger.setLevel(log_level) # to log this function logs
     #===========================================================================
     # Reminder of various format options:
     # %(processName)s is always <MainProcess>
@@ -61,39 +48,45 @@ def initlogger(logger, log_id, log_filepath=None, log_debug=False,
     # %(funcName)s is the name of the function where the log has been called
     # %(name) is the name of the current logger
     #===========================================================================
-    # create the console handler. It should always work.
+    # create the stream handler. It should always work.
     formatter = logging.Formatter('%(name)-20s %(levelname)-8s: %(message)s')
     stream_handler = logging.StreamHandler()
     stream_handler.setLevel(logging.INFO) # set the level to INFO temporarily to log what happens in this module
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
     # create the file handler, for all logs.
+    log_filepath = logfiledata[0]
+    log_debug = logfiledata[1]
     if log_filepath is not None:
         formatter = logging.Formatter('%(asctime)s %(module)-20s %(levelname)-8s: %(message)s')
         try: file_handler = logging.handlers.RotatingFileHandler(log_filepath, maxBytes=50000, backupCount=3)
         except (OSError, IOError) as err: # there was a problem with the file
             logger.error(''.join(('There was an error <', str(err), '> using file <', log_filepath,
                                   '> to handle logs. No file used.')))
+            log_level = logging.WARN
         else:
             logger.info(''.join(('Using <', log_filepath, '> to log the ',
                                  'DEBUG' if log_debug else 'INFO', ' level.')))
             file_handler.setLevel(logging.DEBUG if log_debug else logging.INFO)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
-    # create the email handler
+    else: log_level = logging.WARN
+    # create the email handler.
+    #TODO: if anything is wrong here the handler will trigger an error only when
+    #      an email will be sent. Check how to check this in advance.
+    email_host = emaildata [:2]
+    email_address = emaildata [2]
+    app_name = emaildata[3]
     if email_host is not None and email_address is not None:
-        try: email_handler = logging.handlers.SMTPHandler(email_host,
-                                                          email_address,
-                                                          email_address,
-                                                          ''.join(('Error message from application ',
-                                                                   log_id, '.')))
-        except (OSError, IOError, socket.timeout, socket.error) as err:
-            # TODO: populate with actual errors that might happen and deal with them
-            logger.error(''.join(('There was an error <', str(err),
-                                  '> using email to handle logs. No emails used.')))
-        else:
-            email_handler.setLevel(logging.CRITICAL)
-            email_handler.setFormatter(formatter)
-            logger.addHandler(email_handler)
-    # set the console handler to ERROR
-    stream_handler.setLevel(logging.ERROR)
+        email_handler = logging.handlers. \
+        SMTPHandler(email_host, email_address, email_address,
+                    ''.join(('Error message from application ', app_name, '.')))
+        email_handler.setLevel(logging.CRITICAL)
+        email_handler.setFormatter(formatter)
+        logger.addHandler(email_handler)
+
+    logger.setLevel(log_level)
+    stream_handler.setLevel(logging.WARN)
+
+if __name__ == '__main__':
+    pass

@@ -26,8 +26,6 @@ from mqtt_gateways.utils.init_logger import initlogger
 
 from mqtt_gateways.gateway.configuration import CONFIG
 
-#_IN = 0; _OUT = 1 # indices for the message lists
-
 def startgateway(gateway_interface):
     '''
     Initialisation and main loop.
@@ -80,10 +78,13 @@ def startgateway(gateway_interface):
     conffilepath = app.Properties.getPath('.conf', pathgiven)
     cfg = loadconfig(CONFIG, conffilepath)
 
-    # Initialise the root logger.
-    logfilepath = app.Properties.getPath('.log', cfg.get('LOG', 'logfilename'))
-    emailhost = (cfg.get('LOG', 'host'), cfg.get('LOG', 'port'))
-    initlogger(app.Properties.root_logger, app.Properties.name, logfilepath, cfg.getboolean('LOG', 'debug'), emailhost, cfg.get('LOG', 'address'))
+    # Initialise the logger handlers
+    logfilename = cfg.get('LOG', 'logfilename')
+    if not logfilename: logfilepath = None
+    else: logfilepath = app.Properties.getPath('.log', logfilename)
+    logfiledata = (logfilepath, cfg.getboolean('LOG', 'debug'))
+    emaildata = (cfg.get('LOG', 'emailhost'), cfg.get('LOG', 'emailport'), cfg.get('LOG', 'address'), app.Properties.name)
+    initlogger(app.Properties.root_logger, logfiledata, emaildata)
     logger = app.Properties.getLogger(__name__)
     # Log the configuration used.
     logger.info('=== APPLICATION STARTED ===')
@@ -99,16 +100,22 @@ def startgateway(gateway_interface):
     interfaceparams = {} # the parameters for the interface from the configuration file
     for option in cfg.options('INTERFACE'): # read the configuration parameters in a dictionary
         interfaceparams[option] = str(cfg.get('INTERFACE', option))
-    
+
     gatewayinterface = gateway_interface(interfaceparams)
     # Load the map data.
-    mapfilepath = app.Properties.getPath('.map', cfg.get('MQTT', 'mapfilename'))
-    try:
-        with open(mapfilepath, 'r') as mapfile:
-            #map_data = mapfile.read()
-            map_data = json.load(mapfile)
-    except (OSError, IOError) as err:
-        raise OSError(''.join(('Error <', str(err), '> with map file <', mapfilepath, '>.')))
+    mapping_flag = cfg.getboolean('MQTT', 'mapping')
+    mapfilename = cfg.get('MQTT', 'mapfilename')
+    if mapping_flag and mapfilename:
+        mapfilepath = app.Properties.getPath('.map', mapfilename)
+        try:
+            with open(mapfilepath, 'r') as mapfile:
+                map_data = json.load(mapfile)
+        except (OSError, IOError) as err:
+            raise OSError(''.join(('Error <', str(err), '> with map file <', mapfilepath, '>.')))
+    else:
+        mqtt_map.NO_MAP['root'] = cfg.get('MQTT', 'root')
+        mqtt_map.NO_MAP['topics'] = [topic.strip() for topic in cfg.get('MQTT', 'topics').split(',')]
+        map_data = None
     messagemap = mqtt_map.msgMap(map_data) # will raise ValueErrors if problems
     # Initialise the dictionary to store parameters and to pass to the callbacks
     localdata = {}
