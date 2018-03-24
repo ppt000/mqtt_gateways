@@ -115,18 +115,7 @@ class Client(mqtt.Client):
         self.on_message = on_message
 
         try:
-            self.connect()
+            self.connect(self.host, self.port, self.keepalive)
         except (OSError, IOError) as err:
             # the loop will try to reconnect anyway so just log an info
             _logger.info('Client can''t connect to broker with error ', repr(err))
-
-    def connect(self):
-        super(Client, self).connect(self.host, self.port, self.keepalive)
-        
-    def reconnect(self):
-        ''' '''
-        try: super(Client, self).reconnect()
-        except (OSError, IOError): # still no connection
-            # the broker might have gone down and the connections might not be persistent
-            try: self.connect()
-            except (OSError, IOError): raise
