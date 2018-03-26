@@ -70,12 +70,13 @@ def initlogger(logger, logfiledata, emaildata):
             file_handler.setLevel(logging.DEBUG if log_debug else logging.INFO)
             file_handler.setFormatter(formatter)
             logger.addHandler(file_handler)
+            log_level = logging.DEBUG if log_debug else logging.INFO
     else: log_level = logging.WARN
     # create the email handler.
     #TODO: if anything is wrong here the handler will trigger an error only when
     #      an email will be sent. Check how to check this in advance.
     email_host = emaildata [:2]
-    email_address = emaildata [2]
+    email_address = emaildata[2]
     app_name = emaildata[3]
     if email_host is not None and email_address is not None:
         email_handler = logging.handlers. \
