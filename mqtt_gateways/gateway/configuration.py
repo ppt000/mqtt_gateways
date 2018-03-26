@@ -50,7 +50,7 @@ root: home
 # The topics to subscribe to, separated by a comma.
 #   Only necessary if <mapping> is off, disregarded otherwise
 #   as the topics should then be found in the mapping file.
-topics: home/#, home
+topics: home/dummyfunction/#, home/+/dummy/#
 
 [LOG]
 # Log file: all WARN level logs and above are sent to syslog or equivalent.
