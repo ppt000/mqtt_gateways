@@ -7,28 +7,31 @@ import logging
 import os.path
 import sys
 
+THIS = sys.modules[__name__]
 
-this_module = sys.modules[__name__]
+AppProperties = namedtuple('AppProperties', ('name', 'path', 'root_logger', 'init', 'get_path', 'get_logger'))
 
-AppProperties = namedtuple('AppProperties', ('name', 'path', 'root_logger', 'getPath', 'getLogger'))
+def __dummy(*args, **kwargs):
+    pass
 
-def _getLogger(fullmodulename):
-    if fullmodulename == '__main__' or fullmodulename == this_module.Properties.name:
-        logname = this_module.Properties.name
+def __get_logger(fullmodulename):
+    ''' docstring '''
+    if fullmodulename == '__main__' or fullmodulename == THIS.Properties.name:
+        logname = THIS.Properties.name
     else:
         modulename = fullmodulename.split('.')[-1]
-        if not modulename: logname = this_module.Properties.name
-        else: logname = '.'.join((this_module.Properties.name, modulename))
+        if not modulename: logname = THIS.Properties.name
+        else: logname = '.'.join((THIS.Properties.name, modulename))
     return logging.getLogger(logname)
 
-def _getPath(extension, path_given=None):
+def __get_path(extension, path_given=None):
     '''
     Generates the full absolute path of a file.
 
     This function builds an absolute path to a file based on 3 'default' arguments
     (the basename of the file, the extension of the file, and an absolute path) and
     an extra argument that represents a valid path.
-    Depending on what represents this path (a directory, a file, an absolute or a 
+    Depending on what represents this path (a directory, a file, an absolute or a
     relative reference) the function will generate a full absolute path, relying on the
     'default' parameters if and when necessary.
     The generation of the full path follows those rules:
@@ -40,7 +43,7 @@ def _getPath(extension, path_given=None):
         - if the path given contains an absolute path at the beginning, that is the
           absolute path that will be used;
         - if the path given contains only a relative path at the beginning, then
-          the default absolute path will be prepended to the path given. 
+          the default absolute path will be prepended to the path given.
 
     Args:
         basename (string): basename without extension, usually the application name
@@ -50,23 +53,22 @@ def _getPath(extension, path_given=None):
     Returns:
         string: a full absolute path
     '''
-#        return generatefilepath(properties.name, extension, properties.path, path_given)
-    dfltname = ''.join((this_module.Properties.name, extension))
+    dfltname = ''.join((THIS.Properties.name, extension))
     if path_given == '':
-        filepath = os.path.join(this_module.Properties.path, dfltname)
+        filepath = os.path.join(THIS.Properties.path, dfltname)
     else:
         dirname, filename = os.path.split(path_given.strip())
         if dirname != '': dirname = os.path.normpath(dirname)
         if filename == '': filename = dfltname
-        if dirname == '': dirname = this_module.Properties.path
-        elif not os.path.isabs(dirname): dirname = os.path.join(this_module.Properties.path, dirname)
+        if dirname == '': dirname = THIS.Properties.path
+        elif not os.path.isabs(dirname): dirname = os.path.join(THIS.Properties.path, dirname)
         filepath = os.path.join(dirname, filename)
     return os.path.normpath(filepath)
 
-def _initHelper(full_path):
+def __init_properties(full_path):
     name = os.path.splitext(os.path.basename(full_path))[0] # first part of the filename, without extension
     path = os.path.realpath(os.path.dirname(full_path)) # full path of the launching script
     root_logger = logging.getLogger(name)
-    this_module.Properties = AppProperties(name, path, root_logger, _getPath, _getLogger)
+    THIS.Properties = AppProperties(name, path, root_logger, __dummy, __get_path, __get_logger)
 
-Properties = _initHelper
+Properties = AppProperties('', '', None, __init_properties, __dummy, __dummy)
