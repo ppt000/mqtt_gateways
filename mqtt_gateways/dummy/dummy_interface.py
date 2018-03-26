@@ -7,12 +7,14 @@ Any other code needed for the interface can be placed here or in other
 modules, as long as the necessary imports are included of course.
 '''
 
-import mqtt_gateways.gateway.mqtt_map as mqtt_map
-import mqtt_gateways.utils.app_properties as app
-_logger = app.Properties.getLogger(__name__)
-
 # only import this module for the example code in loop()
 import time
+
+import mqtt_gateways.gateway.mqtt_map as mqtt_map
+
+import mqtt_gateways.utils.app_properties as app
+_logger = app.Properties.get_logger(__name__)
+
 
 class dummyInterface(object):
     '''
@@ -44,8 +46,7 @@ class dummyInterface(object):
             _logger.critical(''.join(('Module ', __name__, ' could not start.\n', errormsg)))
             raise KeyError(errormsg)
         # optional success message
-        _logger.debug(''.join(('Parameter "port" successfully updated with value <',
-                                    port, '>')))
+        _logger.debug(''.join(('Parameter "port" successfully updated with value <', port, '>')))
         # *** INITIALISE YOUR INTERFACE HERE ***
 
         # Keep the message lists locally
@@ -70,10 +71,10 @@ class dummyInterface(object):
         timenow = time.time()
         if (timenow - self.time0) > 30: # every 30 seconds
             msg = mqtt_map.internalMsg(iscmd=True,
-                              function='Lighting',
-                              gateway='dummy',
-                              location='Office',
-                              action='LIGHT_ON')
+                                       function='DummyFunction',
+                                       gateway='Dummy',
+                                       location='Office',
+                                       action='MUTE_ON')
             self._msgl_out.append(msg)
             self.time0 = timenow
             _logger.debug(''.join(('Message <', msg.str(), '> queued to send.')))

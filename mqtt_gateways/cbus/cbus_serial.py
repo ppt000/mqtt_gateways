@@ -10,7 +10,7 @@ import serial
 import mqtt_gateways.utils.throttled_exception as thrx
 
 import mqtt_gateways.utils.app_properties as app
-_logger = app.Properties.getLogger(__name__)
+_logger = app.Properties.get_logger(__name__)
 
 _MYPRINTABLE = ''.join((string.digits, string.letters, string.punctuation))
 
@@ -78,7 +78,7 @@ class cbusSerial(serial.Serial):
     the port specifically to communicate with the C-Bus interface, as well as
     initiate its parameters.  The methods defined override the serial library
     ones; they mostly catch the exceptions and log the errors if any.
-    
+
     Any code using these methods must make sure that values returned are tested and
     that exceptions are being caught.  In those cases probably the port
     is not working and need to be restarted or the application has to stop.

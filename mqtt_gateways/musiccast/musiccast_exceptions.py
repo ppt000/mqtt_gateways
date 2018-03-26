@@ -19,7 +19,7 @@ class mcConfigError(mcError):
     pass
 
 class mcConnectError(mcError):
-    ''' There is no connection, so network might be down, or 
+    ''' There is no connection, so network might be down, or
     local interface not working...'''
     pass
 

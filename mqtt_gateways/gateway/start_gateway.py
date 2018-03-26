@@ -10,7 +10,7 @@ on to the class constructor.  This way custom configuration settings can be pass
 on to the gateway interface.
 
 .. TODO
-    Move the mqtt callbacks in a different module inside a class?
+    Move the MQTT callbacks in a different module inside a class?
     Remove definitively all commented lines relating to reconnection attempts
 '''
 
@@ -64,7 +64,7 @@ def startgateway(gateway_interface):
         OSError: if any of the necessary files are not found.
 
             The necessary files are the configuration file (which is necessary to define
-            the mqtt broker, at the very least) and the map (for which there can not be
+            the MQTT broker, at the very least) and the map (for which there can not be
             any default).
             It tries to catch most other 'possible' exceptions.
             KeyboardInterrupt should work as there are a few pauses around. Finally,
@@ -75,17 +75,18 @@ def startgateway(gateway_interface):
     # Load the configuration. Check the first command line argument for the filename.
     if len(sys.argv) >= 2: pathgiven = sys.argv[1].strip()
     else: pathgiven = '' # default location in case no file name or path is given
-    conffilepath = app.Properties.getPath('.conf', pathgiven)
+    conffilepath = app.Properties.get_path('.conf', pathgiven)
     cfg = loadconfig(CONFIG, conffilepath)
 
     # Initialise the logger handlers
     logfilename = cfg.get('LOG', 'logfilename')
     if not logfilename: logfilepath = None
-    else: logfilepath = app.Properties.getPath('.log', logfilename)
+    else: logfilepath = app.Properties.get_path('.log', logfilename)
     logfiledata = (logfilepath, cfg.getboolean('LOG', 'debug'))
-    emaildata = (cfg.get('LOG', 'emailhost'), cfg.get('LOG', 'emailport'), cfg.get('LOG', 'address'), app.Properties.name)
+    emaildata = (cfg.get('LOG', 'emailhost'), cfg.get('LOG', 'emailport'),
+                 cfg.get('LOG', 'emailaddress'), app.Properties.name)
     initlogger(app.Properties.root_logger, logfiledata, emaildata)
-    logger = app.Properties.getLogger(__name__)
+    logger = app.Properties.get_logger(__name__)
     # Log the configuration used.
     logger.info('=== APPLICATION STARTED ===')
     logger.info('Configuration:')
@@ -106,7 +107,7 @@ def startgateway(gateway_interface):
     mapping_flag = cfg.getboolean('MQTT', 'mapping')
     mapfilename = cfg.get('MQTT', 'mapfilename')
     if mapping_flag and mapfilename:
-        mapfilepath = app.Properties.getPath('.map', mapfilename)
+        mapfilepath = app.Properties.get_path('.map', mapfilename)
         try:
             with open(mapfilepath, 'r') as mapfile:
                 map_data = json.load(mapfile)
@@ -120,28 +121,27 @@ def startgateway(gateway_interface):
     # Initialise the dictionary to store parameters and to pass to the callbacks
     localdata = {}
     localdata['connected'] = False #  boolean to indicate connection, to be set in the callbacks
-    localdata['timeout'] = cfg.getfloat('MQTT', 'timeout') # for the mqtt loop() method
+    localdata['timeout'] = cfg.getfloat('MQTT', 'timeout') # for the MQTT loop() method
     localdata['msgmap'] = messagemap
     localdata['msglist_in'] = mqtt_map.msglist_in
     localdata['interface'] = gatewayinterface
     # Initialise the MQTT client and connect.
-    mqttclient = mqtt.Client(host=cfg.get('MQTT', 'host'),
-                            port=cfg.getint('MQTT', 'port'),
-                            keepalive=cfg.getint('MQTT', 'keepalive'),
-                            client_id=app.Properties.name,
-                            userdata=localdata,
-                            )
+    mqttclient = mqtt.mgClient(host=cfg.get('MQTT', 'host'),
+                               port=cfg.getint('MQTT', 'port'),
+                               keepalive=cfg.getint('MQTT', 'keepalive'),
+                               client_id=app.Properties.name,
+                               userdata=localdata)
 
     # Main loop
     while True:
-        # Deal with the situation where mqtt is not connected as the loop() method does not automatically reconnect.
+        # Deal with the situation where MQTT is not connected as the loop() method does not automatically reconnect.
         if not localdata['connected']: # the MQTT broker is not connected
             try: mqttclient.reconnect() # try to reconnect
             except (OSError, IOError): # still no connection
-                try: raise mqtt.ConnectionError('Client can''t reconnect to broker.') # throttled log
-                except mqtt.ConnectionError as err: # not very elegant but works
+                try: raise mqtt.connectionError('Client can''t reconnect to broker.') # throttled log
+                except mqtt.connectionError as err: # not very elegant but works
                     if err.trigger: logger.error(err.report)
-        # Call the mqtt loop.
+        # Call the MQTT loop.
         mqttclient.loop(localdata['timeout'])
         # Call the interface loop.
         gatewayinterface.loop()

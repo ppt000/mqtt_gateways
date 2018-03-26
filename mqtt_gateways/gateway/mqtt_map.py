@@ -18,7 +18,7 @@ As a reminder, we define the MQTT syntax as follows:
 from collections import namedtuple
 import paho.mqtt.client as mqtt
 import mqtt_gateways.utils.app_properties as app
-_logger = app.Properties.getLogger(__name__)
+_logger = app.Properties.get_logger(__name__)
 
 class internalMsg(object):
     '''
@@ -38,24 +38,24 @@ class internalMsg(object):
 
     def __init__(self, iscmd=False, function=None, gateway=None,
                  location=None, device=None, source=None, action=None, arguments=None):
-        _logger = app.Properties.getLogger(__name__)
         self.iscmd = iscmd
         self.function = function
         self.gateway = gateway
         self.location = location
         self.device = device
-        self.source = source
+        self._source = source
         self.action = action
         if arguments is None: self.arguments = {}
         else: self.arguments = arguments
 
     def copy(self):
+        ''' docstring '''
         return internalMsg(iscmd=self.iscmd,
                            function=self.function,
                            gateway=self.gateway,
                            location=self.location,
                            device=self.device,
-                           source=self.source,
+                           source=self._source,
                            action=self.action,
                            arguments=self.arguments.copy())
 
@@ -67,14 +67,14 @@ class internalMsg(object):
                         ';gateway=', str(self.gateway),
                         ';location=', str(self.location),
                         ';device=', str(self.device),
-                        ';source=', str(self.source),
+                        ';source=', str(self._source),
                         ';action=', str(self.action),
                         ';arguments', str(self.arguments)
                        ))
 
     def reply(self, response, reason):
         ''' Formats the message to be sent as a reply to an existing command
-        
+
         This method is supposed to be used with an existing message that has been received
         by the interface
         '''
@@ -86,21 +86,21 @@ class internalMsg(object):
 msglist_in = []
 msglist_out = []
 
-MappedFields = namedtuple('MappedFields', ('function', 'gateway', 'location',
+mappedFields = namedtuple('mappedFields', ('function', 'gateway', 'location',
                                            'device', 'source', 'action',
                                            'argkey', 'argvalue'))
 
 NO_MAP = {
-  "root": "",
-  "topics": [],
-  "function": {"maptype": "none"},
-  "gateway": {"maptype": "none"},
-  "location": {"maptype": "none"},
-  "device": {"maptype": "none"},
-  "source": {"maptype": "none"},
-  "action": {"maptype": "none"},
-  "argkey": {"maptype": "none"},
-  "argvalue": {"maptype": "none"}
+    'root': '',
+    'topics': [],
+    'function': {'maptype': 'none'},
+    'gateway': {'maptype': 'none'},
+    'location': {'maptype': 'none'},
+    'device': {'maptype': 'none'},
+    'source': {'maptype': 'none'},
+    'action': {'maptype': 'none'},
+    'argkey': {'maptype': 'none'},
+    'argvalue': {'maptype': 'none'}
 }
 
 class msgMap(object):
@@ -118,13 +118,14 @@ class msgMap(object):
     second being its internal equivalent.
 
     Args:
-        jsondata (dictionary): contains the map data in the agreed format
+        jsondata (dictionary): contains the map data in the agreed format;
+                               if None, the NO_MAP structure is used.
 
     '''
 
     class tokenMap(object):
         ''' Represents the mapping for a given token or characteristic.
-        
+
         Each instantiation of this class represent the mapping for a given
         token, and contains the type of mapping, the mapping dictionary if
         available, and the methods to convert the keywords back and forth between
@@ -137,7 +138,7 @@ class msgMap(object):
                 self.mapfunc = self._mapnone # by default with no maps
                 self.maptype = 'none'
             else:
-                self.m2i_dict = mapdict 
+                self.m2i_dict = mapdict
                 self.i2m_dict = {v: k for k, v in mapdict.iteritems()} # inverse dictionary
                 if maptype == 'loose':
                     self.mapfunc = self._maploose
@@ -149,10 +150,12 @@ class msgMap(object):
                     self.mapfunc = self._mapnone # by default if unknown maptype
                     self.maptype = 'none'
 
-        def _m2i(self, mqtt_token):
+        def m2i(self, mqtt_token):
+            ''' docstring '''
             return self.mapfunc(mqtt_token, self.m2i_dict)
 
-        def _i2m(self, internal_token):
+        def i2m(self, internal_token):
+            ''' docstring '''
             mqtt_token = self.mapfunc(internal_token, self.i2m_dict)
             if mqtt_token is None: return ''
             return mqtt_token
@@ -176,13 +179,13 @@ class msgMap(object):
     def __init__(self, jsondict):
         if not jsondict: jsondict = NO_MAP
         self._source = app.Properties.name
-        try: self._root = jsondict['root']
+        try: self.root = jsondict['root']
         except KeyError: raise ValueError('JSON file has no object <root>.')
         try: self.topics = jsondict['topics']
         except KeyError: raise ValueError('JSON file has no object <topics>.')
 
         maplist = []
-        for field in MappedFields._fields:
+        for field in mappedFields._fields:
             try: field_data = jsondict[field]
             except KeyError: raise ValueError(''.join(('JSON file has no object <', field, '>.')))
             try: field_maptype = field_data['maptype']
@@ -193,11 +196,15 @@ class msgMap(object):
                 try: field_map = field_data['map']
                 except KeyError: raise ValueError(''.join(('<', field, '> object has no child <map>.')))
             maplist.append(self.tokenMap(field_maptype, field_map))
-        self.maps = MappedFields._make(maplist)
+        self.maps = mappedFields._make(maplist)
 
         # to access the maps use:
-        #    mqtt_token = maps.*field*._m2i(internal_token)
-        #    example: mqtt_token = maps.gateway._m2i(internal_token)
+        #    mqtt_token = maps.*field*.m2i(internal_token)
+        #    example: mqtt_token = maps.gateway.m2i(internal_token)
+
+    def source(self):
+        ''' docstring '''
+        return self._source
 
     def mqtt2internal(self, mqtt_msg):
         '''
@@ -238,15 +245,15 @@ class msgMap(object):
         else: # this is a straightforward action
             mqtt_action = mqtt_msg.payload
 
-        function = self.maps.function._m2i(tokens[1])
-        gateway = self.maps.gateway._m2i(tokens[2])
-        location = self.maps.location._m2i(tokens[3])
-        device = self.maps.device._m2i(tokens[4])
-        source = self.maps.source._m2i(tokens[5])
-        action = self.maps.action._m2i(mqtt_action)
+        function = self.maps.function.m2i(tokens[1])
+        gateway = self.maps.gateway.m2i(tokens[2])
+        location = self.maps.location.m2i(tokens[3])
+        device = self.maps.device.m2i(tokens[4])
+        source = self.maps.source.m2i(tokens[5])
+        action = self.maps.action.m2i(mqtt_action)
         i_args = {}
         for key, value in m_args.iteritems():
-            i_args[self.maps.argkey._m2i(key)] = self.maps.argvalue._m2i(value)
+            i_args[self.maps.argkey.m2i(key)] = self.maps.argvalue.m2i(value)
 
         if tokens[6] == 'S': iscmd = False
         elif tokens[6] == 'C': iscmd = True
@@ -279,16 +286,16 @@ class msgMap(object):
         '''
 
 
-        mqtt_function = self.maps.function._i2m(internal_msg.function)
-        mqtt_gateway = self.maps.gateway._i2m(internal_msg.gateway)
-        mqtt_location = self.maps.location._i2m(internal_msg.location)
-        mqtt_device = self.maps.device._i2m(internal_msg.device)
-        mqtt_source = self.maps.source._i2m(internal_msg.source)
-        mqtt_action = self.maps.action._i2m(internal_msg.action)
+        mqtt_function = self.maps.function.i2m(internal_msg.function)
+        mqtt_gateway = self.maps.gateway.i2m(internal_msg.gateway)
+        mqtt_location = self.maps.location.i2m(internal_msg.location)
+        mqtt_device = self.maps.device.i2m(internal_msg.device)
+        mqtt_source = self.maps.source.i2m(internal_msg._source)
+        mqtt_action = self.maps.action.i2m(internal_msg.action)
         mqtt_args = {}
         if internal_msg.arguments is not None:
             for key, value in internal_msg.arguments.iteritems():
-                mqtt_args[self.maps.argkey._i2m(key)] = self.maps.argvalue._i2m(value)
+                mqtt_args[self.maps.argkey.i2m(key)] = self.maps.argvalue.i2m(value)
 
         # TODO: decide what source to send:
         #        the official source represented by self._source
@@ -296,7 +303,7 @@ class msgMap(object):
         #        whatever comes from the internal message, represented by mqtt_source?
 
         # Generate topic
-        topic = '/'.join((self._root, mqtt_function, mqtt_gateway, mqtt_location,
+        topic = '/'.join((self.root, mqtt_function, mqtt_gateway, mqtt_location,
                           mqtt_device, self._source, 'C' if internal_msg.iscmd else 'S'))
 
         # Generate payload
@@ -312,25 +319,26 @@ class msgMap(object):
         mqtt_msg.topic = topic; mqtt_msg.payload = payload; mqtt_msg.qos = 0; mqtt_msg.retain = False
         return mqtt_msg
 
-import json # TESTING
 def test():
+    ''' docstring '''
+    import json # TESTING
     # load a valid map in JSON format
-    jsonfilepath = '..\data\cbus_map.json'
+    jsonfilepath = '../data/cbus_map.json'
     with open(jsonfilepath, 'r') as json_file:
         json_data = json.load(json_file)
     # instantiate a class
     msgmap = msgMap(json_data)
     # printout some members
-    function = msgmap.maps.function._m2i('lighting'); print function
-    gateway = msgmap.maps.gateway._m2i('whatever'); print gateway
-    location = msgmap.maps.location._m2i('office'); print location
-    device = msgmap.maps.device._m2i('kitchen_track'); print device
-    source = msgmap.maps.source._m2i('me'); print source
-    action = msgmap.maps.action._m2i('light_on'); print action
+    function = msgmap.maps.function.m2i('lighting'); print function
+    gateway = msgmap.maps.gateway.m2i('whatever'); print gateway
+    location = msgmap.maps.location.m2i('office'); print location
+    device = msgmap.maps.device.m2i('kitchen_track'); print device
+    source = msgmap.maps.source.m2i('me'); print source
+    action = msgmap.maps.action.m2i('light_on'); print action
     m_args = {'key1': 'value1'}
     i_args = {}
     for key, value in m_args.iteritems():
-        i_args[msgmap.maps.argkey._m2i(key)] = msgmap.maps.argvalue._m2i(value)
+        i_args[msgmap.maps.argkey.m2i(key)] = msgmap.maps.argvalue.m2i(value)
     print i_args
 
 if __name__ == '__main__':

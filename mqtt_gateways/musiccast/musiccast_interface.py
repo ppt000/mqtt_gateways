@@ -1,16 +1,15 @@
 '''Interface for MusicCast.'''
 
-import mqtt_gateways.gateway.mqtt_map as mqtt_map
-import mqtt_gateways.utils.app_properties as app
-_logger = app.Properties.getLogger(__name__)
 import mqtt_gateways.musiccast.musiccast_system as mcs
 import mqtt_gateways.musiccast.musiccast_exceptions as mcx
 from mqtt_gateways.musiccast.musiccast_data import ACTIONS
-
+import mqtt_gateways.gateway.mqtt_map as mqtt_map
+import mqtt_gateways.utils.app_properties as app
+_logger = app.Properties.get_logger(__name__)
 
 class musiccastInterface(object):
     '''The Interface.
-    
+
     Resolves the JSON file path and calls the System class in musiccast_system.
     Creates the locations dictionary.
     '''
@@ -25,14 +24,15 @@ class musiccastInterface(object):
         except KeyError:
             _logger.info('The "jsonpath" option is not defined in the configuration file. Using ".".')
             jsonpath = '.'
-        jsonfilepath = app.Properties.getPath('.json', jsonpath)
+        jsonfilepath = app.Properties.get_path('.json', jsonpath)
 
         # instantiate the system structure
         self._system = mcs.System(jsonfilepath)
         # attach the outgoing message list to the static member msgl_out of the Zone class
         mcs.Zone.msgl_out = self._msgl_out
         # create the location to zone dictionary; each key is a location, the value is the Zone object
-        self._locations = {zone.data.location: zone for dev in self._system.devices for zone in dev.zones if zone.data.location}
+        self._locations = {zone.data.location: zone for dev in self._system.devices\
+                           for zone in dev.zones if zone.data.location}
         # TODO: check locations in the map?
 
     def loop(self):
@@ -89,7 +89,8 @@ class musiccastInterface(object):
             except AttributeError as err: _logger.debug(''.join(('Cannot display message.\n', repr(err))))
             try: _logger.debug(''.join(('Source device is: ', zone.zonesource.device.data.id)))
             except AttributeError as err: _logger.debug(''.join(('Cannot display message.\n', repr(err))))
-            try: _logger.debug(''.join(('State of zone ', zone.zonesource.str_zone(), ' is now: ', zone.zonesource.str_state())))
+            try: _logger.debug(''.join(('State of zone ', zone.zonesource.str_zone(), ' is now: ',
+                                        zone.zonesource.str_state())))
             except AttributeError as err: _logger.debug(''.join(('Cannot display message.\n', repr(err))))
 
         # example code to write in the outgoing messages list

@@ -8,29 +8,29 @@ not allow for 'persistent' connection (in which case the original reconnect()
 method does not work because it assumes that the connect method has been called before).
 '''
 
+import paho.mqtt.client as mqtt
 import mqtt_gateways.utils.app_properties as app
 import mqtt_gateways.utils.throttled_exception as thrx
-import paho.mqtt.client as mqtt
 
-_logger = app.Properties.getLogger(__name__)
+_logger = app.Properties.get_logger(__name__)
 
-_mqtt_rc = {
+_MQTT_RC = {
     0: 'Connection successful',
     1: 'Connection refused - incorrect protocol version',
     2: 'Connection refused - invalid client identifier',
     3: 'Connection refused - server unavailable',
     4: 'Connection refused - bad username or password',
     5: 'Connection refused - not authorised'
-    # 6-255: Currently unused.
+       # 6-255: Currently unused.
     }
 
 _THROTTLELAG = 600  #int: lag in seconds to throttle the error logs.
 
 # pylint: disable=too-few-public-methods
-class ConnectionError(thrx.ThrottledException):
+class connectionError(thrx.ThrottledException):
     ''' Base Exception class for this module, inherits from ThrottledException'''
     def __init__(self, msg=None):
-        super(ConnectionError, self).__init__(msg, throttlelag=_THROTTLELAG, module_name=__name__)
+        super(connectionError, self).__init__(msg, throttlelag=_THROTTLELAG, module_name=__name__)
 # pylint: enable=too-few-public-methods
 
 
@@ -43,7 +43,7 @@ class ConnectionError(thrx.ThrottledException):
 #   - the gateway interface instance
 #===============================================================================
 
-# pylint: enable=unused-argument
+# pylint: disable=unused-argument
 def on_connect(client, userdata, flags, return_code):
     '''
     The MQTT callback when a connection is established.
@@ -57,7 +57,7 @@ def on_connect(client, userdata, flags, return_code):
     always connect asking for a clean session.
     '''
     _logger.info(''.join(('Connected with result code <',
-                         str(return_code), '>: ', _mqtt_rc[return_code])))
+                          str(return_code), '>: ', _MQTT_RC[return_code])))
     userdata['connected'] = True
     msg_map = userdata['msgmap']
     for topic in msg_map.topics:
@@ -94,10 +94,10 @@ def on_message(client, userdata, mqtt_msg):
         return
     userdata['msglist_in'].append(internal_msg)
 
-# pylint: disable=unused-argument
+# pylint: enable=unused-argument
 
-class Client(mqtt.Client):
-    ''' docstring
+class mgClient(mqtt.Client):
+    ''' docstring - mg as in mqtt_gateways
 
     The MQTT paho library sets quite a few attributes in the Client class.  They all start
     with an underscore.  Be careful not to overwrite them.
@@ -108,8 +108,8 @@ class Client(mqtt.Client):
         self.keepalive = keepalive
         self.client_id = client_id
 
-        super(Client, self).__init__(client_id=client_id, clean_session=True,
-                                         userdata=userdata, protocol=mqtt.MQTTv311, transport='tcp')
+        super(mgClient, self).__init__(client_id=client_id, clean_session=True,
+                                       userdata=userdata, protocol=mqtt.MQTTv311, transport='tcp')
         self.on_connect = on_connect
         self.on_disconnect = on_disconnect
         self.on_message = on_message

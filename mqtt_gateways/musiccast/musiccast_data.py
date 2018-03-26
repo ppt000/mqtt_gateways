@@ -1,8 +1,10 @@
 '''Data for the MusicCast system.'''
 
-transform_arg = {
-    'power':        lambda self, value: 'on' if value == 'on' else 'standby', # needed only if we create a SET_POWER command
-    'mute':         lambda self, value: 'true' if value == 'on' else 'false', # needed only if we create a SET_MUTE command
+TRANSFORM_ARG = {
+    'power':        lambda self, value: 'on' if value == 'on' else 'standby',
+    # needed only if we create a SET_POWER command
+    'mute':         lambda self, value: 'true' if value == 'on' else 'false',
+    # needed only if we create a SET_MUTE command
     'volume':       lambda self, value: int(int(value) * self.volume_range / 100),
     'input':        lambda self, value: value, # Assume same names between internal and MusicCast, for now
     'source':       lambda self, value: value, # Assume same names between internal and MusicCast, for now
@@ -13,33 +15,33 @@ The lambdas have to be called by a Zone object.
 '''
 
 ACTIONS = {
-'POWER_OFF':        lambda self: self.set_power(False),
-'POWER_ON':         lambda self: self.set_power(True),
-'SET_VOLUME':       lambda self: self.set_volume(),
-'VOLUME_UP':        lambda self: self.set_volume(True),
-'VOLUME_DOWN':      lambda self: self.set_volume(False),
-# TODO: implement VOLUME_UP and DOWN with step...
-'MUTE_ON':          lambda self: self.set_mute(True),
-'MUTE_OFF':         lambda self: self.set_mute(False),
-'MUTE_TOGGLE':      lambda self: self.set_mute(not self.state['mute']),
-'GET_INPUTS':       lambda self: self.send_reply(), # TODO: send message reply with list of available inputs
-'SET_INPUT':        lambda self: self.set_input(),
-'GET_SOURCES':      lambda self: self.send_reply(), # TODO: send message reply with list of available sources
-'SET_SOURCE':       lambda self: self.set_source(),
-'SOURCE_CD':        lambda self: self.set_source('cd'),
-'SOURCE_NETRADIO':  lambda self: self.set_source('net_radio'),
-'SOURCE_TUNER':     lambda self: self.set_source('tuner'),
-'SOURCE_SPOTIFY':   lambda self: self.set_source('spotify'),
-'CD_BACK':          lambda self: self.set_playback('previous', 'cd'),
-'CD_FORWARD':       lambda self: self.set_playback('next', 'cd'),
-'CD_PAUSE':         lambda self: self.set_playback('pause', 'cd'),
-'CD_PLAY':          lambda self: self.set_playback('play', 'cd'),
-'CD_STOP':          lambda self: self.set_playback('stop', 'cd'),
-'SPOTIFY_PLAYPAUSE':lambda self: self.set_playback('play_pause', 'netusb'),
-'SPOTIFY_BACK':     lambda self: self.set_playback('previous', 'netusb'),
-'SPOTIFY_FORWARD':  lambda self: self.set_playback('next', 'netusb'),
-'TUNER_PRESET':     lambda self: self.set_preset('tuner'),
-'NETRADIO_PRESET':  lambda self: self.set_preset('net_radio')
+    'POWER_OFF':        lambda self: self.set_power(False),
+    'POWER_ON':         lambda self: self.set_power(True),
+    'SET_VOLUME':       lambda self: self.set_volume(),
+    'VOLUME_UP':        lambda self: self.set_volume(True),
+    'VOLUME_DOWN':      lambda self: self.set_volume(False),
+    # TODO: implement VOLUME_UP and DOWN with step...
+    'MUTE_ON':          lambda self: self.set_mute(True),
+    'MUTE_OFF':         lambda self: self.set_mute(False),
+    'MUTE_TOGGLE':      lambda self: self.set_mute(not self.state['mute']),
+    'GET_INPUTS':       lambda self: self.send_reply(), # TODO: send message reply with list of available inputs
+    'SET_INPUT':        lambda self: self.set_input(),
+    'GET_SOURCES':      lambda self: self.send_reply(), # TODO: send message reply with list of available sources
+    'SET_SOURCE':       lambda self: self.set_source(),
+    'SOURCE_CD':        lambda self: self.set_source('cd'),
+    'SOURCE_NETRADIO':  lambda self: self.set_source('net_radio'),
+    'SOURCE_TUNER':     lambda self: self.set_source('tuner'),
+    'SOURCE_SPOTIFY':   lambda self: self.set_source('spotify'),
+    'CD_BACK':          lambda self: self.set_playback('previous', 'cd'),
+    'CD_FORWARD':       lambda self: self.set_playback('next', 'cd'),
+    'CD_PAUSE':         lambda self: self.set_playback('pause', 'cd'),
+    'CD_PLAY':          lambda self: self.set_playback('play', 'cd'),
+    'CD_STOP':          lambda self: self.set_playback('stop', 'cd'),
+    'SPOTIFY_PLAYPAUSE':lambda self: self.set_playback('play_pause', 'netusb'),
+    'SPOTIFY_BACK':     lambda self: self.set_playback('previous', 'netusb'),
+    'SPOTIFY_FORWARD':  lambda self: self.set_playback('next', 'netusb'),
+    'TUNER_PRESET':     lambda self: self.set_preset('tuner'),
+    'NETRADIO_PRESET':  lambda self: self.set_preset('net_radio')
     }
 '''
 The dictionary with all the data to process the various commands.
@@ -89,21 +91,22 @@ _SOUNDPROGRAMS = ('munich_a', 'munich_b', 'munich', 'frankfurt', 'stuttgart', 'v
                   'sports', 'action_game', 'roleplaying_game', 'game', 'music_video',
                   'music', 'recital_opera', 'pavilion', 'disco', 'standard', 'spectacle',
                   'sci-fi', 'adventure', 'drama', 'talk_show', 'tv_program', 'mono_movie',
-                   'movie', 'enhanced', '2ch_stereo', '5ch_stereo', '7ch_stereo', '9ch_stereo',
-                   '11ch_stereo', 'stereo', 'surr_decoder', 'my_surround', 'target', 'straight', 'off')
+                  'movie', 'enhanced', '2ch_stereo', '5ch_stereo', '7ch_stereo', '9ch_stereo',
+                  '11ch_stereo', 'stereo', 'surr_decoder', 'my_surround', 'target', 'straight', 'off')
 
 def print1():
+    ''' docstring '''
     print 'ZONES:'
-    for z in _ZONES:
-        print '\t', z
+    for zon in _ZONES:
+        print '\t', zon
     print
     print 'INPUTS:'
-    for i in _INPUTS:
-        print '\t', i
+    for inp in _INPUTS:
+        print '\t', inp
     print
     print 'SOUND PROGRAMS:'
-    for s in _SOUNDPROGRAMS:
-        print '\t', s
+    for snd in _SOUNDPROGRAMS:
+        print '\t', snd
 
 if __name__ == '__main__':
     print1()

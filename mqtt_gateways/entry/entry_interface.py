@@ -11,7 +11,7 @@ import serial
 
 import mqtt_gateways.gateway.mqtt_map as mqtt_map
 import mqtt_gateways.utils.app_properties as app
-_logger = app.Properties.getLogger(__name__)
+_logger = app.Properties.get_logger(__name__)
 
 class entryInterface(object):
     '''
@@ -65,8 +65,7 @@ class entryInterface(object):
             _logger.critical(''.join(('Module ', __name__, ' could not start.\n', errormsg)))
             raise KeyError(errormsg)
         # optional success message
-        _logger.debug(''.join(('Parameter "port" successfully updated with value <',
-                                    port, '>')))
+        _logger.debug(''.join(('Parameter "port" successfully updated with value <', port, '>')))
         # *** INITIATE YOUR INTERFACE HERE ***
         self._ser = serial.Serial(port=port, baudrate=9600, timeout=0.01)
 
@@ -95,9 +94,9 @@ class entryInterface(object):
         except serial.SerialException:
             _logger.info('Problem reading the serial interface')
             return
-        if len(data) == 0: return # no event, the read timed out
+        if not data: return # no event, the read timed out
         if len(data) == 1: # not normal, log and return
-            _logger.info(''.join(('Too short data read: ,',str(data),'>.')))
+            _logger.info(''.join(('Too short data read: ,', str(data), '>.')))
             return
         # now convert the 'data' into an internal message
         if data[0] == '1':
@@ -115,18 +114,17 @@ class entryInterface(object):
                 _logger.info('Unexpected code from Entry System')
                 return
         msg = mqtt_map.internalMsg(iscmd=False, # it is a status message
-                          function='Security',
-                          gateway='entry2mqtt',
-                          location='gate_entry',
-                          device=device,
-                          action=action)
+                                   function='Security',
+                                   gateway='entry2mqtt',
+                                   location='gate_entry',
+                                   device=device,
+                                   action=action)
         self._msgl_out.append(msg)
         _logger.debug(''.join(('Message <', msg.str(), '> queued to send.')))
         # let's switch on the lights now if the gate was opened
         if data == '21':
             msg = mqtt_map.internalMsg(iscmd=True,
-                              function='Lighting',
-                              location='gate_entry',
-                              action='LIGHT_ON')
+                                       function='Lighting',
+                                       location='gate_entry',
+                                       action='LIGHT_ON')
             self._msgl_out.append(msg)
-

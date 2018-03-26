@@ -9,7 +9,7 @@ from mqtt_gateways.cbus.cbus_data import FUNCTIONS, ACTIONS, LIGHTS, LEVELS
 
 import mqtt_gateways.gateway.mqtt_map as mqtt_map
 import mqtt_gateways.utils.app_properties as app
-_logger = app.Properties.getLogger(__name__)
+_logger = app.Properties.get_logger(__name__)
 
 def _checksum(hexstring):
     '''
@@ -67,7 +67,8 @@ class cbusInterface(cbus_serial.cbusSerial):
 
         # Check the params dictionary
         try: dev = params['device']
-        except KeyError: raise cbus_serial.cbusInitError('The <device> option is not defined in the configuration file.')
+        except KeyError:
+            raise cbus_serial.cbusInitError('The <device> option is not defined in the configuration file.')
 
         _logger.debug(''.join(('Module <', __name__, '> started.')))
         # Constructor below might throw an exception. Let it bubble, as it is fatal.
@@ -206,8 +207,8 @@ class cbusInterface(cbus_serial.cbusSerial):
             self.write(''.join(('\x5C053800', cbus_cmd, '\x0D')))
         # send back a confirmation message, same as imsg except that it is a status message
         ireply = mqtt_map.internalMsg(iscmd=False, function=imsg.function,
-                             gateway=imsg.gateway, location=imsg.location,
-                             device=imsg.device, action=imsg.action, arguments=imsg.arguments)
+                                      gateway=imsg.gateway, location=imsg.location,
+                                      device=imsg.device, action=imsg.action, arguments=imsg.arguments)
         self._msglist_out.append(ireply)
 
     def _status_request(self):
@@ -331,14 +332,14 @@ class cbusInterface(cbus_serial.cbusSerial):
                         if destination_address in self._lights[_CBUS2INTERNAL]:
                             # the unit exists so the code should not be '0000'
                             _logger.info(''.join(('Light <',
-                                                       self._lights[_CBUS2INTERNAL][destination_address],
-                                                       '> is unexpectedly offline. Check the fuses.')))
+                                                  self._lights[_CBUS2INTERNAL][destination_address],
+                                                  '> is unexpectedly offline. Check the fuses.')))
                     else: # the remaining code should be a proper level code
                         try:
                             level_byte = ''.join((LEVELS[remaining_code[2:4]], LEVELS[remaining_code[0:2]]))
                         except KeyError:
                             _logger.info(''.join(('Level <', remaining_code[0:4],
-                                                       '> not recognised. Skip message.')))
+                                                  '> not recognised. Skip message.')))
                             return
                         cmdlist.append([application_byte, action_byte, level_byte, destination_address, source_address])
                     remaining_code = remaining_code[4:]
@@ -390,10 +391,10 @@ class cbusInterface(cbus_serial.cbusSerial):
             else: args = {'level': str(int(com[2], 16)*100/255)}
 
             imsg = mqtt_map.internalMsg(function=fct,
-                               iscmd=False, # they are all status messages
-                               location='',
-                               device=dev,
-                               action=act,
-                               arguments=args)
+                                        iscmd=False, # they are all status messages
+                                        location='',
+                                        device=dev,
+                                        action=act,
+                                        arguments=args)
             self._msglist_out.append(imsg)
             _logger.debug(''.join(('Message stacked with action <', act, '> to device <', dev, '>.')))
