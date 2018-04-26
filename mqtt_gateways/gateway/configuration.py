@@ -53,7 +53,7 @@ root: home
 topics: home/dummyfunction/#, home/+/dummy/#
 
 [LOG]
-# Log file: all WARN level logs and above are sent to syslog or equivalent.
+# Log file: all WARN level logs and above are sent to stderr or equivalent.
 #   To log levels below that a file location is needed.
 #   Leave this option blank to not enable a log file - and therefore logs
 #   of level below WARN will be lost.
@@ -65,6 +65,11 @@ logfilename: .
 
 # Turn debug 'on' if logging of all debug messages is required, otherwise its INFO
 debug: off
+
+# Added 2018-03-29
+# Console level: use NONE for no console output, otherwise the level wanted
+# Logs will be directed to stdout.
+consolelevel: NONE
 
 # Email credentials; leave empty if not required.
 #   All CRITICAL level logs are sent to this email, if defined.

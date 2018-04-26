@@ -82,11 +82,12 @@ def startgateway(gateway_interface):
     logfilename = cfg.get('LOG', 'logfilename')
     if not logfilename: logfilepath = None
     else: logfilepath = app.Properties.get_path('.log', logfilename)
-    logfiledata = (logfilepath, cfg.getboolean('LOG', 'debug'))
+    logfiledata = (logfilepath, cfg.getboolean('LOG', 'debug'), cfg.get('LOG', 'consolelevel'))
     emaildata = (cfg.get('LOG', 'emailhost'), cfg.get('LOG', 'emailport'),
                  cfg.get('LOG', 'emailaddress'), app.Properties.name)
     initlogger(app.Properties.root_logger, logfiledata, emaildata)
     logger = app.Properties.get_logger(__name__)
+
     # Log the configuration used.
     logger.info('=== APPLICATION STARTED ===')
     logger.info('Configuration:')
@@ -94,15 +95,23 @@ def startgateway(gateway_interface):
         for option in cfg.options(section):
             logger.info(''.join(('   [', section, '].', option, ' : <',
                                  str(cfg.get(section, option)), '>.')))
+
     # Warn in case of error processing the configuration file.
     if cfg.has_section('CONFIG') and cfg.has_option('CONFIG', 'error'):
         raise OSError(''.join(('Error <', cfg.get('CONFIG', 'error'), '> while processing the configuration file.')))
+
+
+    # Create 2 message lists, one incoming, the other outgoing
+    msglist_in = mqtt_map.MsgList()
+    msglist_out = mqtt_map.MsgList()
+
+
     # Instantiate the gateway interface.
     interfaceparams = {} # the parameters for the interface from the configuration file
     for option in cfg.options('INTERFACE'): # read the configuration parameters in a dictionary
         interfaceparams[option] = str(cfg.get('INTERFACE', option))
+    gatewayinterface = gateway_interface(interfaceparams, msglist_in, msglist_out)
 
-    gatewayinterface = gateway_interface(interfaceparams)
     # Load the map data.
     mapping_flag = cfg.getboolean('MQTT', 'mapping')
     mapfilename = cfg.get('MQTT', 'mapfilename')
@@ -118,13 +127,15 @@ def startgateway(gateway_interface):
         mqtt_map.NO_MAP['topics'] = [topic.strip() for topic in cfg.get('MQTT', 'topics').split(',')]
         map_data = None
     messagemap = mqtt_map.msgMap(map_data) # will raise ValueErrors if problems
+
     # Initialise the dictionary to store parameters and to pass to the callbacks
     localdata = {}
     localdata['connected'] = False #  boolean to indicate connection, to be set in the callbacks
     localdata['timeout'] = cfg.getfloat('MQTT', 'timeout') # for the MQTT loop() method
     localdata['msgmap'] = messagemap
-    localdata['msglist_in'] = mqtt_map.msglist_in
+    localdata['msglist_in'] = msglist_in
     localdata['interface'] = gatewayinterface
+
     # Initialise the MQTT client and connect.
     mqttclient = mqtt.mgClient(host=cfg.get('MQTT', 'host'),
                                port=cfg.getint('MQTT', 'port'),
@@ -134,6 +145,7 @@ def startgateway(gateway_interface):
 
     # Main loop
     while True:
+
         # Deal with the situation where MQTT is not connected as the loop() method does not automatically reconnect.
         if not localdata['connected']: # the MQTT broker is not connected
             try: mqttclient.reconnect() # try to reconnect
@@ -141,14 +153,17 @@ def startgateway(gateway_interface):
                 try: raise mqtt.connectionError('Client can''t reconnect to broker.') # throttled log
                 except mqtt.connectionError as err: # not very elegant but works
                     if err.trigger: logger.error(err.report)
+
         # Call the MQTT loop.
         mqttclient.loop(localdata['timeout'])
+
         # Call the interface loop.
         gatewayinterface.loop()
+
         # Publish the messages returned, if any.
         while True:
-            try: internal_msg = mqtt_map.msglist_out.pop(0) # send messages on a FIFO basis
-            except IndexError: break
+            internal_msg = msglist_out.pull()
+            if internal_msg is None: break
             try: mqtt_msg = messagemap.internal2mqtt(internal_msg)
             except ValueError as err:
                 logger.info(str(err))

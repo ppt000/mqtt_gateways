@@ -2,7 +2,18 @@
 Function to initialise a logger with pre-defined handlers.
 '''
 
+import sys
 import logging.handlers
+
+_LEVELNAMES = {
+    'CRITICAL' : logging.CRITICAL,
+    'ERROR' : logging.ERROR,
+    'WARN' : logging.WARNING,
+    'WARNING' : logging.WARNING,
+    'INFO' : logging.INFO,
+    'DEBUG' : logging.DEBUG,
+    'NOTSET' : logging.NOTSET
+    }
 
 def initlogger(logger, logfiledata, emaildata):
     '''
@@ -24,6 +35,8 @@ def initlogger(logger, logfiledata, emaildata):
                                    if None, file logging is disabled;
                              [1] = log_debug (boolean): a flag to indicate
                                    if DEBUG logging is required, or only INFO;
+                             [2] = consolelevel (string): the level of log to be sent
+                                   to the console (stdout), or NONE.
         emaildata (tuple): [0] = host (string),
                            [1] = port (int),
                            [2] = address (string),
@@ -54,9 +67,18 @@ def initlogger(logger, logfiledata, emaildata):
     stream_handler.setLevel(logging.INFO) # set the level to INFO temporarily to log what happens in this module
     stream_handler.setFormatter(formatter)
     logger.addHandler(stream_handler)
-    # create the file handler, for all logs.
+    # assign the logfiledata for clarity
     log_filepath = logfiledata[0]
     log_debug = logfiledata[1]
+    console_level = logfiledata[2]
+    # create the console handler, if wanted
+    if console_level in _LEVELNAMES:
+        formatter = logging.Formatter('%(asctime)s %(name)-20s %(levelname)-8s: %(message)s')
+        cons_handler = logging.StreamHandler(sys.stdout)
+        cons_handler.setLevel(_LEVELNAMES[console_level])
+        cons_handler.setFormatter(formatter)
+        logger.addHandler(cons_handler)
+    # create the file handler, for all logs.
     if log_filepath is not None:
         formatter = logging.Formatter('%(asctime)s %(module)-20s %(levelname)-8s: %(message)s')
         try: file_handler = logging.handlers.RotatingFileHandler(log_filepath, maxBytes=50000, backupCount=3)

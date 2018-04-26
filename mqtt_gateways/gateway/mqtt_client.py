@@ -86,13 +86,14 @@ def on_message(client, userdata, mqtt_msg):
     then appended to the incoming message list for the gateway interface to
     execute it later.
     '''
-    _logger.debug(''.join(('MsgRcvd-Topic:<', mqtt_msg.topic, '>-Payload:<', str(mqtt_msg.payload), '>.')))
+    _logger.debug(''.join(('MQTTMsgRcvd-Topic:<', mqtt_msg.topic,
+                           '>-Payload:<', str(mqtt_msg.payload), '>.')))
     msg_map = userdata['msgmap']
     try: internal_msg = msg_map.mqtt2internal(mqtt_msg)
     except ValueError as err:
         _logger.info(str(err))
         return
-    userdata['msglist_in'].append(internal_msg)
+    userdata['msglist_in'].push(internal_msg)
 
 # pylint: enable=unused-argument
 

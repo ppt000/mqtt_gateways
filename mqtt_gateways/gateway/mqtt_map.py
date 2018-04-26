@@ -17,6 +17,7 @@ As a reminder, we define the MQTT syntax as follows:
 
 from collections import namedtuple
 import paho.mqtt.client as mqtt
+import Queue
 import mqtt_gateways.utils.app_properties as app
 _logger = app.Properties.get_logger(__name__)
 
@@ -83,8 +84,26 @@ class internalMsg(object):
         self.arguments['reason'] = reason
         return self
 
-msglist_in = []
-msglist_out = []
+class MsgList(Queue.Queue, object): #(object):
+    ''' docstring'''
+    def __init__(self):
+        super(MsgList, self).__init__(maxsize=0) #TODO: implement maxsize
+        # self._list = [] # when inherit from Queue, remove this
+
+    def push(self, item):
+        # self._list.append(item)
+        super(MsgList, self).put(item, block=True, timeout=None) # TODO: implement timeout
+
+    def pull(self):
+        # try: return self._list.pop(0)
+        # except IndexError: return None
+        try: item = super(MsgList, self).get(block=False)
+        except Queue.Empty: return None
+        super(MsgList, self).task_done() # TODO: check it is ok to do it straight away
+        return item
+
+#msglist_in = MsgList()
+#msglist_out = MsgList()
 
 mappedFields = namedtuple('mappedFields', ('function', 'gateway', 'location',
                                            'device', 'source', 'action',
