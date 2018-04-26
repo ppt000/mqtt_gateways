@@ -7,7 +7,7 @@ import logging
 import os.path
 import sys
 
-THIS = sys.modules[__name__]
+_THIS = sys.modules[__name__]
 
 AppProperties = namedtuple('AppProperties', ('name', 'path', 'root_logger', 'init', 'get_path', 'get_logger'))
 
@@ -16,12 +16,12 @@ def __dummy(*args, **kwargs):
 
 def __get_logger(fullmodulename):
     ''' docstring '''
-    if fullmodulename == '__main__' or fullmodulename == THIS.Properties.name:
-        logname = THIS.Properties.name
+    if fullmodulename == '__main__' or fullmodulename == _THIS.Properties.name:
+        logname = _THIS.Properties.name
     else:
         modulename = fullmodulename.split('.')[-1]
-        if not modulename: logname = THIS.Properties.name
-        else: logname = '.'.join((THIS.Properties.name, modulename))
+        if not modulename: logname = _THIS.Properties.name
+        else: logname = '.'.join((_THIS.Properties.name, modulename))
     return logging.getLogger(logname)
 
 def __get_path(extension, path_given=None):
@@ -53,15 +53,15 @@ def __get_path(extension, path_given=None):
     Returns:
         string: a full absolute path
     '''
-    dfltname = ''.join((THIS.Properties.name, extension))
+    dfltname = ''.join((_THIS.Properties.name, extension))
     if path_given == '':
-        filepath = os.path.join(THIS.Properties.path, dfltname)
+        filepath = os.path.join(_THIS.Properties.path, dfltname)
     else:
         dirname, filename = os.path.split(path_given.strip())
         if dirname != '': dirname = os.path.normpath(dirname)
         if filename == '': filename = dfltname
-        if dirname == '': dirname = THIS.Properties.path
-        elif not os.path.isabs(dirname): dirname = os.path.join(THIS.Properties.path, dirname)
+        if dirname == '': dirname = _THIS.Properties.path
+        elif not os.path.isabs(dirname): dirname = os.path.join(_THIS.Properties.path, dirname)
         filepath = os.path.join(dirname, filename)
     return os.path.normpath(filepath)
 
@@ -69,6 +69,6 @@ def __init_properties(full_path):
     name = os.path.splitext(os.path.basename(full_path))[0] # first part of the filename, without extension
     path = os.path.realpath(os.path.dirname(full_path)) # full path of the launching script
     root_logger = logging.getLogger(name)
-    THIS.Properties = AppProperties(name, path, root_logger, __dummy, __get_path, __get_logger)
+    _THIS.Properties = AppProperties(name, path, root_logger, __dummy, __get_path, __get_logger)
 
 Properties = AppProperties('', '', None, __init_properties, __dummy, __dummy)
