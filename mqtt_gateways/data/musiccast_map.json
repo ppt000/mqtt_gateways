@@ -6,7 +6,7 @@
 		},
 		"maptype": "strict"
 	},
-	"source": {
+	"sender": {
 		"maptype": "none"
 	},
 	"topics": [

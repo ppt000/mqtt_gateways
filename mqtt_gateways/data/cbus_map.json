@@ -32,7 +32,7 @@
 		},
 	"maptype": "strict"
 	},
-"source": {"maptype": "none"},
+"sender": {"maptype": "none"},
 "action": {
 	"map": {
 		"ramp_60s_lvl": "RAMP_60S_LVL",

@@ -12,7 +12,7 @@
 		"maptype": "strict"
 	},
 	"device": {"maptype": "none"},
-	"source": {"maptype": "none"},
+	"sender": {"maptype": "none"},
 	"action": {
 		"map": {
 			"mute_toggle": "MUTE_TGL",

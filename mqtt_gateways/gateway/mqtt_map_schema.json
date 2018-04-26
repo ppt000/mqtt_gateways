@@ -38,11 +38,11 @@
 		"gateway": {"$ref": "#/definitions/mapschema"},
 		"location": {"$ref": "#/definitions/mapschema"},
 		"device": {"$ref": "#/definitions/mapschema"},
-		"source": {"$ref": "#/definitions/mapschema"},
+		"sender": {"$ref": "#/definitions/mapschema"},
 		"action": {"$ref": "#/definitions/mapschema"},
 		"argkey": {"$ref": "#/definitions/mapschema"},
 		"argvalue": {"$ref": "#/definitions/mapschema"}
 		},
 	"required": ["root", "topics", "function", "gateway", "location",
-		"device", "source", "action", "argkey", "argvalue"]
+		"device", "sender", "action", "argkey", "argvalue"]
 }

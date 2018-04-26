@@ -10,7 +10,7 @@ It defines 2 classes:
 
 As a reminder, we define the MQTT syntax as follows:
 
-- topic: ``root/function/gateway/location/device/source/type-{C or S}``
+- topic: ``root/function/gateway/location/device/sender/type-{C or S}``
 - payload: action or status, in plain text or in query string,
   e.g. ``key1=value1&key2=value2&...``
 '''
@@ -32,20 +32,20 @@ class internalMsg(object):
         gateway (string): internal representation of gateway, optional
         location (string): internal representation of location, optional
         device (string): internal representation of device, optional
-        source (string): internal representation of source, optional
+        sender (string): internal representation of sender, optional
         action (string): internal representation of action, optional
         arguments (dictionary of strings): all values should be assumed to be strings, optional
 
     '''
 
     def __init__(self, iscmd=False, function=None, gateway=None,
-                 location=None, device=None, source=None, action=None, arguments=None):
+                 location=None, device=None, sender=None, action=None, arguments=None):
         self.iscmd = iscmd
         self.function = function
         self.gateway = gateway
         self.location = location
         self.device = device
-        self._source = source
+        self._sender = sender
         self.action = action
         if arguments is None: self.arguments = {}
         else: self.arguments = arguments
@@ -57,7 +57,7 @@ class internalMsg(object):
                            gateway=self.gateway,
                            location=self.location,
                            device=self.device,
-                           source=self._source,
+                           sender=self._sender,
                            action=self.action,
                            arguments=self.arguments.copy())
 
@@ -69,7 +69,7 @@ class internalMsg(object):
                         ';gateway=', str(self.gateway),
                         ';location=', str(self.location),
                         ';device=', str(self.device),
-                        ';source=', str(self._source),
+                        ';sender=', str(self._sender),
                         ';action=', str(self.action),
                         ';arguments', str(self.arguments)
                        ))
@@ -107,7 +107,7 @@ class MsgList(Queue.Queue, object): #(object):
 #msglist_out = MsgList()
 
 mappedFields = namedtuple('mappedFields', ('function', 'gateway', 'location',
-                                           'device', 'source', 'action',
+                                           'device', 'sender', 'action',
                                            'argkey', 'argvalue'))
 
 NO_MAP = {
@@ -117,7 +117,7 @@ NO_MAP = {
     'gateway': {'maptype': 'none'},
     'location': {'maptype': 'none'},
     'device': {'maptype': 'none'},
-    'source': {'maptype': 'none'},
+    'sender': {'maptype': 'none'},
     'action': {'maptype': 'none'},
     'argkey': {'maptype': 'none'},
     'argvalue': {'maptype': 'none'}
@@ -198,7 +198,7 @@ class msgMap(object):
 
     def __init__(self, jsondict):
         if not jsondict: jsondict = NO_MAP
-        self._source = app.Properties.name
+        self._sender = app.Properties.name
         try: self.root = jsondict['root']
         except KeyError: raise ValueError('JSON file has no object <root>.')
         try: self.topics = jsondict['topics']
@@ -222,9 +222,9 @@ class msgMap(object):
         #    mqtt_token = maps.*field*.m2i(internal_token)
         #    example: mqtt_token = maps.gateway.m2i(internal_token)
 
-    def source(self):
+    def sender(self):
         ''' docstring '''
-        return self._source
+        return self._sender
 
     def mqtt2internal(self, mqtt_msg):
         '''
@@ -284,7 +284,7 @@ class msgMap(object):
         gateway = self.maps.gateway.m2i(tokens[2])
         location = self.maps.location.m2i(tokens[3])
         device = self.maps.device.m2i(tokens[4])
-        source = self.maps.source.m2i(tokens[5])
+        sender = self.maps.sender.m2i(tokens[5])
         action = self.maps.action.m2i(mqtt_action)
         i_args = {}
         for key, value in m_args.iteritems():
@@ -300,7 +300,7 @@ class msgMap(object):
                            gateway=gateway,
                            location=location,
                            device=device,
-                           source=source,
+                           sender=sender,
                            action=action,
                            arguments=i_args)
 
@@ -313,7 +313,7 @@ class msgMap(object):
 
         Returns:
             a MQTTMessage object: a full MQTT message where topic syntax is
-            ``root/function/gateway/location/device/source/{C or S}`` and
+            ``root/function/gateway/location/device/sender/{C or S}`` and
             payload syntax is either a plain action or a query string.
 
         Raises:
@@ -325,21 +325,21 @@ class msgMap(object):
         mqtt_gateway = self.maps.gateway.i2m(internal_msg.gateway)
         mqtt_location = self.maps.location.i2m(internal_msg.location)
         mqtt_device = self.maps.device.i2m(internal_msg.device)
-        mqtt_source = self.maps.source.i2m(internal_msg._source)
+        mqtt_sender = self.maps.sender.i2m(internal_msg._sender)
         mqtt_action = self.maps.action.i2m(internal_msg.action)
         mqtt_args = {}
         if internal_msg.arguments is not None:
             for key, value in internal_msg.arguments.iteritems():
                 mqtt_args[self.maps.argkey.i2m(key)] = self.maps.argvalue.i2m(value)
 
-        # TODO: decide what source to send:
-        #        the official source represented by self._source
+        # TODO: decide what sender to send:
+        #        the official sender represented by self._sender
         # or
-        #        whatever comes from the internal message, represented by mqtt_source?
+        #        whatever comes from the internal message, represented by mqtt_sender?
 
         # Generate topic
         topic = '/'.join((self.root, mqtt_function, mqtt_gateway, mqtt_location,
-                          mqtt_device, self._source, 'C' if internal_msg.iscmd else 'S'))
+                          mqtt_device, self._sender, 'C' if internal_msg.iscmd else 'S'))
 
         # Generate payload
         #========================================================================================
@@ -381,7 +381,7 @@ def test():
     gateway = msgmap.maps.gateway.m2i('whatever'); print gateway
     location = msgmap.maps.location.m2i('office'); print location
     device = msgmap.maps.device.m2i('kitchen_track'); print device
-    source = msgmap.maps.source.m2i('me'); print source
+    sender = msgmap.maps.sender.m2i('me'); print sender
     action = msgmap.maps.action.m2i('light_on'); print action
     m_args = {'key1': 'value1'}
     i_args = {}
