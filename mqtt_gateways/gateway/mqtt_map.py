@@ -18,6 +18,7 @@ As a reminder, we define the MQTT syntax as follows:
 from collections import namedtuple
 import paho.mqtt.client as mqtt
 import Queue
+import json
 import mqtt_gateways.utils.app_properties as app
 _logger = app.Properties.get_logger(__name__)
 
@@ -248,21 +249,36 @@ class msgMap(object):
         # unpack the arguments
         # one of them should be 'action' and goes into mqtt_action
         # the other arguments form a dictionary: m_args
-        m_args = {}
-        if '&' in mqtt_msg.payload: # there is more than one argument in this payload
-            mqtt_action = None # just in case there is no 'action' in the list of arguments
-            # the payload syntax is a query string 'key1=value1&key2=value2&...'
-            for token in mqtt_msg.payload.split('&'):
-                argument = token.split('=')
-                if len(argument) != 2:
-                    raise ValueError(''.join(('Bad format for payload <', mqtt_msg.payload, '>')))
-                if argument[0] == 'action':
-                    mqtt_action = argument[1]
-                else:
-                    m_args[argument[0]] = argument[1]
-            if not mqtt_action: raise ValueError(''.join(('No action found in payload <', mqtt_msg.payload, '>')))
+        
+        if mqtt_msg.payload[0] == '{': # it is a JSON structure
+            try: m_args = json.loads(mqtt_msg.payload)
+            except (ValueError, TypeError) as err:
+                raise ValueError(''.join(('Bad format for payload <', mqtt_msg.payload, '>'\
+                                          ' with error:\n\t', repr(err))))
+            try: mqtt_action = m_args.pop('action')
+            except KeyError:
+                raise ValueError(''.join(('No action found in payload <', mqtt_msg.payload, '>')))
         else: # this is a straightforward action
             mqtt_action = mqtt_msg.payload
+            m_args = {}
+
+        
+        #== OLD VERSION WITH QUERY STRINGS =====================================================
+        # if '&' in mqtt_msg.payload: # there is more than one argument in this payload
+        #     mqtt_action = None # just in case there is no 'action' in the list of arguments
+        #     # the payload syntax is a query string 'key1=value1&key2=value2&...'
+        #     for token in mqtt_msg.payload.split('&'):
+        #         argument = token.split('=')
+        #         if len(argument) != 2:
+        #             raise ValueError(''.join(('Bad format for payload <', mqtt_msg.payload, '>')))
+        #         if argument[0] == 'action':
+        #             mqtt_action = argument[1]
+        #         else:
+        #             m_args[argument[0]] = argument[1]
+        #     if not mqtt_action: raise ValueError(''.join(('No action found in payload <', mqtt_msg.payload, '>')))
+        # else: # this is a straightforward action
+        #     mqtt_action = mqtt_msg.payload
+        #===========================================================================================
 
         function = self.maps.function.m2i(tokens[1])
         gateway = self.maps.gateway.m2i(tokens[2])
@@ -326,16 +342,29 @@ class msgMap(object):
                           mqtt_device, self._source, 'C' if internal_msg.iscmd else 'S'))
 
         # Generate payload
+        #========================================================================================
+        
+        
         if not mqtt_args: # no arguments, just publish the action text on its own
             payload = mqtt_action
-        else: # there are arguments, publish a query string
-            stringlist = ['action=', mqtt_action]
-            for arg in internal_msg.arguments:
-                stringlist.extend(['&', arg, '=', internal_msg.arguments[arg]])
-            payload = ''.join(stringlist)
+        else: # there are arguments, publish them
+            mqtt_args['action'] = mqtt_action
+            try: payload = json.dumps(mqtt_args)
+            except (ValueError, TypeError) as err:
+                raise ValueError(''.join(('Error serialising arguments:\n\t', repr(err))))
+
+            #=== OLD VERSION AS QUERY STRINGS ======================================================
+            # stringlist = ['action=', mqtt_action]
+            # for arg in internal_msg.arguments:
+            #     stringlist.extend(['&', arg, '=', internal_msg.arguments[arg]])
+            # payload = ''.join(stringlist)
+            #=======================================================================================
 
         mqtt_msg = mqtt.MQTTMessage()
-        mqtt_msg.topic = topic; mqtt_msg.payload = payload; mqtt_msg.qos = 0; mqtt_msg.retain = False
+        mqtt_msg.topic = topic
+        mqtt_msg.payload = payload
+        mqtt_msg.qos = 0
+        mqtt_msg.retain = False
         return mqtt_msg
 
 def test():
