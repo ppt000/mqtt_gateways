@@ -113,10 +113,9 @@ those 3 elements eases the processing of internal messages in the code.
 Message Source
 --------------
 
-The source of a message has always been a nice to have,
-and it should not be any different here.  The sender, which
-can be a device or a gateway, is therefore considered as
-another optional characteristic in our message model.
+The sender, which can be a device or another gateway for example, is
+an optional characteristic in our message model.  It can be very useful in
+answering status requests in a targeted way, for example.
 
 Bridging MQTT and the interface
 *******************************
