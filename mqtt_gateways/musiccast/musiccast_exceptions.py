@@ -3,6 +3,13 @@ Exceptions definitions for the MusicCast package.
 
 All are inherited from the Exception class, with the member
 'message' available.
+
+Types of Errors:
+
+* CommsError: any type of communication error which should not be due
+    to a bad command or a command issued at the wrong time.
+* 
+    
 '''
 
 # TODO: Categorise errors =====================================================
@@ -12,30 +19,46 @@ All are inherited from the Exception class, with the member
 # Data read not as expected
 # Arguments from commands missing or wrong type
 
-class mcError(Exception):
+class AnyError(Exception):
     pass
 
-class mcConfigError(mcError):
+class CommsError(AnyError):
     pass
 
-class mcConnectError(mcError):
-    ''' There is no connection, so network might be down, or
-    local interface not working...'''
+class LogicError(AnyError):
     pass
 
-class mcDeviceError(mcError):
-    ''' The device responds but could not execute whatever was asked.'''
+class ConfigError(AnyError):
     pass
 
-class mcSyntaxError(mcError):
+class MusicCastError(AnyError):
     pass
 
-class mcHTTPError(mcError):
-    ''' Protocol error, there was misunderstanding in the communication.'''
-    pass
-
-class mcLogicError(mcError):
-    pass
-
-class mcProtocolError(mcError):
-    pass
+#===============================================================================
+# 
+# 
+# class mcConfigError(AnyError): #DONE
+#     pass
+# 
+# class mcConnectError(AnyError): # DONE
+#     ''' There is no connection, so network might be down, or
+#     local interface not working...'''
+#     pass
+# 
+# class mcDeviceError(AnyError): # DONE
+#     ''' The device responds but could not execute whatever was asked.'''
+#     pass
+# 
+# class mcSyntaxError(AnyError): #DONE
+#     pass
+# 
+# class mcHTTPError(AnyError): # DONE
+#     ''' Protocol error, there was misunderstanding in the communication.'''
+#     pass
+# 
+# class mcLogicError(AnyError): # DONE
+#     pass
+# 
+# class mcProtocolError(AnyError):
+#     pass
+#===============================================================================

@@ -34,10 +34,10 @@ mqtt\_gateways\.musiccast\.musiccast\_system module
     :private-members:
     :show-inheritance:
 
-mqtt\_gateways\.musiccast\.musiccast\_http module
+mqtt\_gateways\.musiccast\.musiccast\_comm module
 -------------------------------------------------
 
-.. automodule:: mqtt_gateways.musiccast.musiccast_http
+.. automodule:: mqtt_gateways.musiccast.musiccast_comm
     :members:
     :private-members:
     :show-inheritance:
