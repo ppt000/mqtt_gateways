@@ -36,7 +36,7 @@ class dummyInterface(object):
 
     '''
 
-    def __init__(self, params):
+    def __init__(self, params, msglist_in, msglist_out):
         # optional welcome message
         _logger.debug(''.join(('Module <', __name__, '> started.')))
         # example of how to use the 'params' dictionary
@@ -50,8 +50,8 @@ class dummyInterface(object):
         # *** INITIALISE YOUR INTERFACE HERE ***
 
         # Keep the message lists locally
-        self._msgl_in = mqtt_map.msglist_in
-        self._msgl_out = mqtt_map.msglist_out
+        self._msgl_in = msglist_in
+        self._msgl_out = msglist_out
 
         # initialise time for the example only
         self.time0 = time.time()
@@ -63,8 +63,8 @@ class dummyInterface(object):
         '''
         # example code to read the incoming messages list
         while True:
-            try: msg = self._msgl_in.pop(0) # read messages on a FIFO basis
-            except IndexError: break
+            msg = self._msgl_in.pull()
+            if msg is None: break
             # do something with the message; here we log only
             _logger.debug(''.join(('Message <', msg.str(), '> received.')))
         # example code to write in the outgoing messages list periodically
@@ -75,6 +75,6 @@ class dummyInterface(object):
                                        gateway='Dummy',
                                        location='Office',
                                        action='MUTE_ON')
-            self._msgl_out.append(msg)
+            self._msgl_out.push(msg)
             self.time0 = timenow
             _logger.debug(''.join(('Message <', msg.str(), '> queued to send.')))

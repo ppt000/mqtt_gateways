@@ -55,7 +55,7 @@ class entryInterface(object):
 
     '''
 
-    def __init__(self, params):
+    def __init__(self, params, msglist_in, msglist_out):
         # optional welcome message
         _logger.debug(''.join(('Module <', __name__, '> started.')))
         # example of how to use the 'params' dictionary
@@ -70,8 +70,8 @@ class entryInterface(object):
         self._ser = serial.Serial(port=port, baudrate=9600, timeout=0.01)
 
         # Keep the message lists locally
-        self._msgl_in = mqtt_map.msglist_in
-        self._msgl_out = mqtt_map.msglist_out
+        self._msgl_in = msglist_in
+        self._msgl_out = msglist_out
 
     def loop(self):
         ''' The method called periodically by the main loop.
@@ -80,8 +80,8 @@ class entryInterface(object):
         '''
         # example code to read the incoming messages list
         while True:
-            try: msg = self._msgl_in.pop(0) # read messages on a FIFO basis
-            except IndexError: break
+            msg = self._msgl_in.pull()
+            if msg is None: break
             # do something with the message; here we log first
             _logger.debug(''.join(('Message <', msg.str(), '> received.')))
             # given the topics subscribed to, we will only test the action
@@ -119,7 +119,7 @@ class entryInterface(object):
                                    location='gate_entry',
                                    device=device,
                                    action=action)
-        self._msgl_out.append(msg)
+        self._msgl_out.push(msg)
         _logger.debug(''.join(('Message <', msg.str(), '> queued to send.')))
         # let's switch on the lights now if the gate was opened
         if data == '21':
@@ -127,4 +127,4 @@ class entryInterface(object):
                                        function='Lighting',
                                        location='gate_entry',
                                        action='LIGHT_ON')
-            self._msgl_out.append(msg)
+            self._msgl_out.push(msg)

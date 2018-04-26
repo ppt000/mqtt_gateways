@@ -63,7 +63,7 @@ class cbusInterface(cbus_serial.cbusSerial):
         fullpath (string): full absolute path of the application.
     '''
 
-    def __init__(self, params):
+    def __init__(self, params, msglist_in, msglist_out):
 
         # Check the params dictionary
         try: dev = params['device']
@@ -77,8 +77,8 @@ class cbusInterface(cbus_serial.cbusSerial):
         self._block = 0
 
         # Outgoing messages list
-        self._msglist_in = mqtt_map.msglist_in
-        self._msglist_out = mqtt_map.msglist_out
+        self._msglist_in = msglist_in
+        self._msglist_out = msglist_out
 
         # Build the _functions dictionaries
         self._functions = [FUNCTIONS, {v: k for k, v in FUNCTIONS.items()}]
@@ -127,8 +127,8 @@ class cbusInterface(cbus_serial.cbusSerial):
         '''
         # Empty the incoming list first
         while True:
-            try: imsg = self._msglist_in.pop(0) # read messages on a FIFO basis
-            except IndexError: break
+            imsg = self._msglist_in.pull()
+            if imsg is None: break
             try: self._execute_command(imsg)
             except cbus_serial.cbusConnectionError as err:
                 if err.trigger: _logger.critical(err.report)
@@ -209,7 +209,7 @@ class cbusInterface(cbus_serial.cbusSerial):
         ireply = mqtt_map.internalMsg(iscmd=False, function=imsg.function,
                                       gateway=imsg.gateway, location=imsg.location,
                                       device=imsg.device, action=imsg.action, arguments=imsg.arguments)
-        self._msglist_out.append(ireply)
+        self._msglist_out.push(ireply)
 
     def _status_request(self):
         '''
@@ -396,5 +396,5 @@ class cbusInterface(cbus_serial.cbusSerial):
                                         device=dev,
                                         action=act,
                                         arguments=args)
-            self._msglist_out.append(imsg)
+            self._msglist_out.push(imsg)
             _logger.debug(''.join(('Message stacked with action <', act, '> to device <', dev, '>.')))
