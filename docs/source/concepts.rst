@@ -181,11 +181,11 @@ The payload is simply the action alone if there are no arguments:
 
 	action_name
 	
-or the action with the arguments all in a query string style like this:
+or the action with the arguments all in a JSON string like this:
 
 .. code-block:: none
 
-	action=action_name&arg1=value1&arg2=value2
+	{"action":"action_name","arg1":"value1","arg2":"value2",...}
 	
 where the first ``action`` key is written as is and the other argument keys
 can be chosen by the developer and will be simply copied in the **argument**
