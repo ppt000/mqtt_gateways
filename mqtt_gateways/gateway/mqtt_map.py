@@ -106,9 +106,8 @@ class MsgList(Queue.Queue, object): #(object):
 #msglist_in = MsgList()
 #msglist_out = MsgList()
 
-mappedFields = namedtuple('mappedFields', ('function', 'gateway', 'location',
-                                           'device', 'sender', 'action',
-                                           'argkey', 'argvalue'))
+mappedFields = namedtuple('mappedFields', ('function', 'gateway', 'location', 'device', 'sender',
+                                           'action', 'argkey', 'argvalue'))
 
 NO_MAP = {
     'root': '',
@@ -326,20 +325,15 @@ class msgMap(object):
         mqtt_location = self.maps.location.i2m(internal_msg.location)
         mqtt_device = self.maps.device.i2m(internal_msg.device)
         mqtt_sender = self.maps.sender.i2m(internal_msg._sender)
+        if not mqtt_sender: mqtt_sender = self._sender
         mqtt_action = self.maps.action.i2m(internal_msg.action)
         mqtt_args = {}
         if internal_msg.arguments is not None:
             for key, value in internal_msg.arguments.iteritems():
                 mqtt_args[self.maps.argkey.i2m(key)] = self.maps.argvalue.i2m(value)
-
-        # TODO: decide what sender to send:
-        #        the official sender represented by self._sender
-        # or
-        #        whatever comes from the internal message, represented by mqtt_sender?
-
         # Generate topic
         topic = '/'.join((self.root, mqtt_function, mqtt_gateway, mqtt_location,
-                          mqtt_device, self._sender, 'C' if internal_msg.iscmd else 'S'))
+                          mqtt_device, mqtt_sender, 'C' if internal_msg.iscmd else 'S'))
 
         # Generate payload
         #========================================================================================
@@ -369,7 +363,6 @@ class msgMap(object):
 
 def test():
     ''' docstring '''
-    import json # TESTING
     # load a valid map in JSON format
     jsonfilepath = '../data/cbus_map.json'
     with open(jsonfilepath, 'r') as json_file:
