@@ -130,7 +130,6 @@ def startgateway(gateway_interface):
 
     # Initialise the dictionary to store parameters and to pass to the callbacks
     localdata = {}
-    localdata['connected'] = False #  boolean to indicate connection, to be set in the callbacks
     localdata['timeout'] = cfg.getfloat('MQTT', 'timeout') # for the MQTT loop() method
     localdata['msgmap'] = messagemap
     localdata['msglist_in'] = msglist_in
@@ -145,14 +144,6 @@ def startgateway(gateway_interface):
 
     # Main loop
     while True:
-
-        # Deal with the situation where MQTT is not connected as the loop() method does not automatically reconnect.
-        if not localdata['connected']: # the MQTT broker is not connected
-            try: mqttclient.reconnect() # try to reconnect
-            except (OSError, IOError): # still no connection
-                try: raise mqtt.connectionError('Client can''t reconnect to broker.') # throttled log
-                except mqtt.connectionError as err: # not very elegant but works
-                    if err.trigger: logger.error(err.report)
 
         # Call the MQTT loop.
         mqttclient.loop(localdata['timeout'])

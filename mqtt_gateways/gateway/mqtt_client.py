@@ -8,6 +8,7 @@ not allow for 'persistent' connection (in which case the original reconnect()
 method does not work because it assumes that the connect method has been called before).
 '''
 
+import time
 import paho.mqtt.client as mqtt
 import mqtt_gateways.utils.app_properties as app
 import mqtt_gateways.utils.throttled_exception as thrx
@@ -108,15 +109,39 @@ class mgClient(mqtt.Client):
         self.port = port
         self.keepalive = keepalive
         self.client_id = client_id
+        self.userdata = userdata
+        self.userdata['connected'] = False # connection state, to be set in the callbacks
+        self.connect_time = 0 # time of connection request
 
         super(mgClient, self).__init__(client_id=client_id, clean_session=True,
                                        userdata=userdata, protocol=mqtt.MQTTv311, transport='tcp')
         self.on_connect = on_connect
         self.on_disconnect = on_disconnect
         self.on_message = on_message
+        self.connect()
+        return
 
+    def connect(self):
         try:
-            self.connect(self.host, self.port, self.keepalive)
+            super(mgClient, self).connect(self.host, self.port, self.keepalive)
+            self.connect_time = time.time()
         except (OSError, IOError) as err:
             # the loop will try to reconnect anyway so just log an info
             _logger.info('Client can''t connect to broker with error ', repr(err))
+        return
+
+    def reconnect(self):
+        super(mgClient, self).reconnect()
+
+    def loop(self, timeout):
+        # Deal with the situation where MQTT is not connected as the loop() method does not automatically reconnect.
+        now = time.time()
+        if now - self.connect_time > 0.1 and not self.userdata['connected']:
+            # the MQTT broker is not connected
+            try: self.reconnect() # try to reconnect
+            except (OSError, IOError): # still no connection
+                try: raise connectionError('Client can''t reconnect to broker.') # throttled log
+                except connectionError as err: # not very elegant but works
+                    if err.trigger: _logger.error(err.report)
+            
+        super(mgClient, self).loop(timeout)
