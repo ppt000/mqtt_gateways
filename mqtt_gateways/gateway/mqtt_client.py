@@ -25,7 +25,8 @@ _MQTT_RC = {
        # 6-255: Currently unused.
     }
 
-_THROTTLELAG = 600  #int: lag in seconds to throttle the error logs.
+_THROTTLELAG = 600  # lag in seconds to throttle the error logs.
+_RACELAG = 0.1 # lag in seconds to wait before testing the connection state
 
 # pylint: disable=too-few-public-methods
 class connectionError(thrx.ThrottledException):
@@ -112,6 +113,7 @@ class mgClient(mqtt.Client):
         self.userdata = userdata
         self.userdata['connected'] = False # connection state, to be set in the callbacks
         self.connect_time = 0 # time of connection request
+        self.lag_test = self.lag_end # this is a 'function attribute', like a method.
 
         super(mgClient, self).__init__(client_id=client_id, clean_session=True,
                                        userdata=userdata, protocol=mqtt.MQTTv311, transport='tcp')
@@ -121,10 +123,26 @@ class mgClient(mqtt.Client):
         self.connect()
         return
 
+    def lag_end(self):
+        ''' Used to inhibit the connection test during the lag.
+        
+        There is the possibility of a race condition when testing the connection state.  This
+        happens if the **on_connect** call-back is not called fast enough and the main loop
+        tests the connection state before that call-back has set the state to *connected*.  As a
+        consequence the automatic reconnection feature gets triggered, and the connection process
+        gets jammed with the broker.  That's why we need to leave a little lag before testing the
+        connection.
+        '''
+        if time.time() - self.connect_time > _RACELAG:
+            self.lag_test = lambda: True
+            return True
+        return False
+
     def connect(self):
         try:
             super(mgClient, self).connect(self.host, self.port, self.keepalive)
             self.connect_time = time.time()
+            self.lag_test = self.lag_end
         except (OSError, IOError) as err:
             # the loop will try to reconnect anyway so just log an info
             _logger.info('Client can''t connect to broker with error ', repr(err))
@@ -132,16 +150,26 @@ class mgClient(mqtt.Client):
 
     def reconnect(self):
         super(mgClient, self).reconnect()
+        self.connect_time = time.time()
+        self.lag_test = self.lag_end
 
     def loop(self, timeout):
+        ''' Implements automatic reconnection on top of the parent loop method.
+        
+        The use of the method/attribute **lag_test** is to avoid having to test the lag forever
+        once the connection is established.  Once the lag is finished, this method gets replaced
+        by a simple lambda, which hopefully is much faster than calling the time library and
+        doing a comparison.  Probably a case of premature optimisation though...
+        '''
         # Deal with the situation where MQTT is not connected as the loop() method does not automatically reconnect.
-        now = time.time()
-        if now - self.connect_time > 0.1 and not self.userdata['connected']:
-            # the MQTT broker is not connected
-            try: self.reconnect() # try to reconnect
-            except (OSError, IOError): # still no connection
-                try: raise connectionError('Client can''t reconnect to broker.') # throttled log
-                except connectionError as err: # not very elegant but works
-                    if err.trigger: _logger.error(err.report)
+#        if now - self.connect_time > 0.1 and not self.userdata['connected']:
+        if self.lag_test():
+            if not self.userdata['connected']:
+                # the MQTT broker is not connected
+                try: self.reconnect() # try to reconnect
+                except (OSError, IOError): # still no connection
+                    try: raise connectionError('Client can''t reconnect to broker.') # throttled log
+                    except connectionError as err: # not very elegant but works
+                        if err.trigger: _logger.error(err.report)
             
         super(mgClient, self).loop(timeout)
