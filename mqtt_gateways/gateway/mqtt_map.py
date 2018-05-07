@@ -45,7 +45,7 @@ class internalMsg(object):
         self.gateway = gateway
         self.location = location
         self.device = device
-        self._sender = sender
+        self.sender = sender
         self.action = action
         if arguments is None: self.arguments = {}
         else: self.arguments = arguments
@@ -57,7 +57,7 @@ class internalMsg(object):
                            gateway=self.gateway,
                            location=self.location,
                            device=self.device,
-                           sender=self._sender,
+                           sender=self.sender,
                            action=self.action,
                            arguments=self.arguments.copy())
 
@@ -69,7 +69,7 @@ class internalMsg(object):
                         ';gateway=', str(self.gateway),
                         ';location=', str(self.location),
                         ';device=', str(self.device),
-                        ';sender=', str(self._sender),
+                        ';sender=', str(self.sender),
                         ';action=', str(self.action),
                         ';arguments', str(self.arguments)
                        ))
@@ -100,9 +100,6 @@ class MsgList(Queue.Queue, object):
         except Queue.Empty: return None
         super(MsgList, self).task_done() # CHECK: is it ok to do it straight away?
         return item
-
-#msglist_in = MsgList()
-#msglist_out = MsgList()
 
 mappedFields = namedtuple('mappedFields', ('function', 'gateway', 'location', 'device', 'sender',
                                            'action', 'argkey', 'argvalue'))
@@ -322,7 +319,7 @@ class msgMap(object):
         mqtt_gateway = self.maps.gateway.i2m(internal_msg.gateway)
         mqtt_location = self.maps.location.i2m(internal_msg.location)
         mqtt_device = self.maps.device.i2m(internal_msg.device)
-        mqtt_sender = self.maps.sender.i2m(internal_msg._sender)
+        mqtt_sender = self.maps.sender.i2m(internal_msg.sender)
         if not mqtt_sender: mqtt_sender = self._sender
         mqtt_action = self.maps.action.i2m(internal_msg.action)
         mqtt_args = {}
