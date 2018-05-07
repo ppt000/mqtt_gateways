@@ -129,24 +129,38 @@ def startgateway(gateway_interface):
     messagemap = mqtt_map.msgMap(map_data) # will raise ValueErrors if problems
 
     # Initialise the dictionary to store parameters and to pass to the callbacks
-    localdata = {}
-    localdata['timeout'] = cfg.getfloat('MQTT', 'timeout') # for the MQTT loop() method
-    localdata['msgmap'] = messagemap
-    localdata['msglist_in'] = msglist_in
-    localdata['interface'] = gatewayinterface
+    timeout =  cfg.getfloat('MQTT', 'timeout') # for the MQTT loop() method
+
+    #===============================================================================================
+    # localdata = {}
+    # localdata['timeout'] = cfg.getfloat('MQTT', 'timeout') # for the MQTT loop() method
+    # localdata['msgmap'] = messagemap
+    # localdata['msglist_in'] = msglist_in
+    # localdata['interface'] = gatewayinterface
+    #===============================================================================================
+
+    # the function that will be called by the on_message MQTT call-back
+    def process_mqttmsg(mqtt_msg):
+        ''' docstring.'''
+        try: internal_msg = messagemap.mqtt2internal(mqtt_msg)
+        except ValueError as err:
+            logger.info(str(err))
+            return
+        msglist_in.push(internal_msg)
 
     # Initialise the MQTT client and connect.
     mqttclient = mqtt.mgClient(host=cfg.get('MQTT', 'host'),
                                port=cfg.getint('MQTT', 'port'),
                                keepalive=cfg.getint('MQTT', 'keepalive'),
                                client_id=app.Properties.name,
-                               userdata=localdata)
+                               on_msg_func=process_mqttmsg,
+                               topics=messagemap.topics) #, userdata=localdata)
 
     # Main loop
     while True:
 
         # Call the MQTT loop.
-        mqttclient.loop(localdata['timeout'])
+        mqttclient.loop(timeout)
 
         # Call the interface loop.
         gatewayinterface.loop()

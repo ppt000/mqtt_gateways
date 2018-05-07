@@ -10,9 +10,10 @@ method does not work because it assumes that the connect method has been called 
 
 import time
 import paho.mqtt.client as mqtt
-import mqtt_gateways.utils.app_properties as app
+
 import mqtt_gateways.utils.throttled_exception as thrx
 
+import mqtt_gateways.utils.app_properties as app
 _logger = app.Properties.get_logger(__name__)
 
 _MQTT_RC = {
@@ -22,54 +23,67 @@ _MQTT_RC = {
     3: 'Connection refused - server unavailable',
     4: 'Connection refused - bad username or password',
     5: 'Connection refused - not authorised'
-       # 6-255: Currently unused.
+    # 6-255: Currently unused.
     }
 
 _THROTTLELAG = 600  # lag in seconds to throttle the error logs.
 _RACELAG = 0.1 # lag in seconds to wait before testing the connection state
 
 # pylint: disable=too-few-public-methods
+
 class connectionError(thrx.ThrottledException):
     ''' Base Exception class for this module, inherits from ThrottledException'''
     def __init__(self, msg=None):
         super(connectionError, self).__init__(msg, throttlelag=_THROTTLELAG, module_name=__name__)
+
 # pylint: enable=too-few-public-methods
 
-
-#===============================================================================
-# The MQTT callbacks.
-# In all the MQTT callbacks, the userdata is expected to be a dictionary of the
-# following elements:
-#   - the root logger
-#   - mqttparams, the dict of MQTT parameters, including the msg_map and the msg_list
-#   - the gateway interface instance
-#===============================================================================
-
 # pylint: disable=unused-argument
-def on_connect(client, userdata, flags, return_code):
+
+def _on_connect(client, userdata, flags, return_code):
     '''
     The MQTT callback when a connection is established.
 
-    It sets to True the key ``connected`` of the :data:`localdata`
-    dictionary and subscribes to the topics available in the message map.
-    Note: the argument flags is a dictionary with at least the item
-    'session present' (with a space!) in it which will be 1 if the session
-    is indeed already present.  In our case it should never happen because
-    the broker should have persistence turned off and the client should
-    always connect asking for a clean session.
+    It sets to True the `connected` attribute and subscribes to the
+    topics available in the message map.
+    
+    The argument flags is a dictionary with at least the item 'session present' (with a space!) in
+    it which will be 1 if the session is indeed already present.  In our case it should never happen
+    because the broker should have persistence turned off and the client should always connect
+    asking for a clean session.
     '''
-    _logger.info(''.join(('Connected with result code <',
-                          str(return_code), '>: ', _MQTT_RC[return_code])))
-    userdata['connected'] = True
-    msg_map = userdata['msgmap']
-    for topic in msg_map.topics:
-        try: client.subscribe(topic)
-        except ValueError:
-            _logger.info(''.join(('Topic <', topic, '> cannot be subscribed to.')))
-            continue
-        _logger.debug(''.join(('Subscribing to topic <', topic, '>.')))
+    try: session_present = flags['session present']
+    except KeyError: session_present = 'Info Not Available'
+    _logger.debug(''.join(('on_connect: ',
+                           'Result code <', str(return_code), '>: ', _MQTT_RC[return_code],
+                          '. Session Present flag :', str(session_present), '.')))
+    if return_code != 0: # unsuccesfull
+        _logger.info(''.join(('Connection failed with result code <',
+                              str(return_code), '>: ', _MQTT_RC[return_code], '.')))
+        # FEATURE: deal with situations that are not recoverable
+        return
+    _logger.info(''.join(('Connected! Return message: ', _MQTT_RC[return_code], '.')))
+    client.connected = True
+    # msg_map = userdata['msgmap']
+    try: (result, mid) = client.subscribe(client.topics)
+    except ValueError as err:
+        _logger.info(''.join(('Topic subscription error:\n\t', repr(err))))
+    else:
+        if result == mqtt.MQTT_ERR_NO_CONN:
+            _logger.info('Attempt to subscribe without connection.')
+        elif result != mqtt.MQTT_ERR_SUCCESS:
+            _logger.info(''.join(('Unrecognised result <', str(result), '> during subscription.')))
+        else:
+            _logger.debug(''.join(('Subscriptions succesfull to topics <', str(client.topics),
+                                   '> with message id <', str(mid), '>.')))
+    return
 
-def on_disconnect(client, userdata, return_code):
+def _on_subscribe(client, userdata, mid, granted_qos):
+    ''' docstring.'''
+    _logger.debug(''.join(('Subscription #', str(mid), ' with qos ', str(granted_qos), '.')))
+    return
+
+def _on_disconnect(client, userdata, return_code):
     '''
     The MQTT callback when a disconnection occurs.
 
@@ -78,9 +92,9 @@ def on_disconnect(client, userdata, return_code):
     of the reconnection attempts.
     '''
     _logger.info(''.join(('Client has disconnected with code <', str(return_code), '>.')))
-    userdata['connected'] = False
+    client.connected = False
 
-def on_message(client, userdata, mqtt_msg):
+def _on_message(client, userdata, mqtt_msg):
     '''
     The MQTT callback when a message is received from the MQTT broker.
 
@@ -90,48 +104,62 @@ def on_message(client, userdata, mqtt_msg):
     '''
     _logger.debug(''.join(('MQTTMsgRcvd-Topic:<', mqtt_msg.topic,
                            '>-Payload:<', str(mqtt_msg.payload), '>.')))
-    msg_map = userdata['msgmap']
-    try: internal_msg = msg_map.mqtt2internal(mqtt_msg)
-    except ValueError as err:
-        _logger.info(str(err))
-        return
-    userdata['msglist_in'].push(internal_msg)
+    client.on_msg_func(mqtt_msg)
+    return
+    #=== Removed 7May2018 ====== Delete when appropriate ===========================================
+    # msg_map = userdata['msgmap']
+    # try: internal_msg = msg_map.mqtt2internal(mqtt_msg)
+    # except ValueError as err:
+    #     _logger.info(str(err))
+    #     return
+    # userdata['msglist_in'].push(internal_msg)
+    #===============================================================================================
 
 # pylint: enable=unused-argument
 
 class mgClient(mqtt.Client):
     ''' docstring - mg as in mqtt_gateways
 
-    The MQTT paho library sets quite a few attributes in the Client class.  They all start
+    Args:
+        on_msg_func (function): takes an MQTT message as argument and is called during on_message().
+        topics (list of strings): e.g.['home/audiovideo/#', 'home/lighting/#'].
+    Note: The MQTT paho library sets quite a few attributes in the Client class.  They all start
     with an underscore.  Be careful not to overwrite them.
     '''
-    def __init__(self, host='localhost', port=1883, keepalive=60, client_id='', userdata=None):
+    def __init__(self, host='localhost', port=1883, keepalive=60, client_id='',
+                 on_msg_func=None, topics=[], userdata=None):
         self.host = host
         self.port = port
         self.keepalive = keepalive
         self.client_id = client_id
+        if on_msg_func == None: self.on_msg_func = lambda x: None
+        else: self.on_msg_func = on_msg_func
+        self.topics = [] # list of tuples (topic, qos)
+        for topic in topics:
+            self.topics.append((topic, 0))
         self.userdata = userdata
-        self.userdata['connected'] = False # connection state, to be set in the callbacks
+        self.connected = False
+        #self.userdata['connected'] = False # connection state, to be set in the callbacks
         self.connect_time = 0 # time of connection request
         self.lag_test = self.lag_end # this is a 'function attribute', like a method.
 
         super(mgClient, self).__init__(client_id=client_id, clean_session=True,
                                        userdata=userdata, protocol=mqtt.MQTTv311, transport='tcp')
-        self.on_connect = on_connect
-        self.on_disconnect = on_disconnect
-        self.on_message = on_message
+        self.on_connect = _on_connect
+        self.on_disconnect = _on_disconnect
+        self.on_message = _on_message
         self.connect()
         return
 
     def lag_end(self):
         ''' Used to inhibit the connection test during the lag.
         
-        There is the possibility of a race condition when testing the connection state.  This
-        happens if the **on_connect** call-back is not called fast enough and the main loop
-        tests the connection state before that call-back has set the state to *connected*.  As a
-        consequence the automatic reconnection feature gets triggered, and the connection process
-        gets jammed with the broker.  That's why we need to leave a little lag before testing the
-        connection.
+        There is the possibility of a race condition when testing the connection state too soon
+        after requesting a connection.  This happens if the **on_connect** call-back is not called
+        fast enough and the main loop tests the connection state before that call-back has set the
+        state to *connected*.  As a consequence the automatic reconnection feature gets triggered
+        while a connection is already under way, and the connection process gets jammed with the
+        broker.  That's why we need to leave a little lag before testing the connection.
         '''
         if time.time() - self.connect_time > _RACELAG:
             self.lag_test = lambda: True
@@ -161,11 +189,8 @@ class mgClient(mqtt.Client):
         by a simple lambda, which hopefully is much faster than calling the time library and
         doing a comparison.  Probably a case of premature optimisation though...
         '''
-        # Deal with the situation where MQTT is not connected as the loop() method does not automatically reconnect.
-#        if now - self.connect_time > 0.1 and not self.userdata['connected']:
         if self.lag_test():
-            if not self.userdata['connected']:
-                # the MQTT broker is not connected
+            if not self.connected:
                 try: self.reconnect() # try to reconnect
                 except (OSError, IOError): # still no connection
                     try: raise connectionError('Client can''t reconnect to broker.') # throttled log
