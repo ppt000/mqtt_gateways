@@ -85,22 +85,20 @@ class internalMsg(object):
         self.arguments['reason'] = reason
         return self
 
-class MsgList(Queue.Queue, object): #(object):
+class MsgList(Queue.Queue, object):
     ''' docstring'''
     def __init__(self):
-        super(MsgList, self).__init__(maxsize=0) #TODO: implement maxsize
-        # self._list = [] # when inherit from Queue, remove this
+        super(MsgList, self).__init__(maxsize=0) # FEATURE: implement maxsize
 
     def push(self, item):
-        # self._list.append(item)
-        super(MsgList, self).put(item, block=True, timeout=None) # TODO: implement timeout
+        ''' Equivalent to self._list.append(item)'''
+        super(MsgList, self).put(item, block=True, timeout=None) # FEATURE: implement timeout
 
     def pull(self):
-        # try: return self._list.pop(0)
-        # except IndexError: return None
+        ''' Equivalent to self._list.pop(0)'''
         try: item = super(MsgList, self).get(block=False)
         except Queue.Empty: return None
-        super(MsgList, self).task_done() # TODO: check it is ok to do it straight away
+        super(MsgList, self).task_done() # CHECK: is it ok to do it straight away?
         return item
 
 #msglist_in = MsgList()
@@ -126,15 +124,16 @@ class msgMap(object):
     '''
     Contains the mapping data and the conversion methods.
 
-    Initialises the 5 maps from the argument ``mapdata``,
-    which is an object that must be readable line by line with a simple iterator.
-    The syntax for ``mapdata`` is that each line has to start with
-    one of 6 possible labels (``topic``, ``function``, ``gateway``,
-    ``location``, ``device``, ``action``) followed by ``:`` and then the actual data.
-    If the label is ``topic`` then the data should be a valid MQTT topic
-    string, otherwise the data should be a pair of keywords separated by a
-    ``,``, the first being the MQTT representation of the element and the
-    second being its internal equivalent.
+    Initialises the 5 maps from the argument ``mapdata``, which is an object that must be readable
+    line by line with a simple iterator. The syntax for ``mapdata`` is that each line has to start
+    with one of 6 possible labels (``topic``, ``function``, ``gateway``, ``location``, ``device``,
+    ``action``) followed by ``:`` and then the actual data. If the label is ``topic`` then the data
+    should be a valid MQTT topic string, otherwise the data should be a pair of keywords separated
+    by a ``,``, the first being the MQTT representation of the element and the second being its
+    internal equivalent.
+
+    To access the maps use: mqtt_token = maps.*field*.m2i(internal_token)
+    Example: mqtt_token = maps.gateway.m2i(internal_token)
 
     Args:
         jsondata (dictionary): contains the map data in the agreed format;
@@ -206,20 +205,19 @@ class msgMap(object):
         maplist = []
         for field in mappedFields._fields:
             try: field_data = jsondict[field]
-            except KeyError: raise ValueError(''.join(('JSON file has no object <', field, '>.')))
+            except KeyError:
+                raise ValueError(''.join(('JSON file has no object <', field, '>.')))
             try: field_maptype = field_data['maptype']
-            except KeyError: raise ValueError(''.join(('<', field, '> object has no child <maptype>.')))
+            except KeyError:
+                raise ValueError(''.join(('<', field, '> object has no child <maptype>.')))
             if field_maptype == 'none':
                 field_map = None
             else:
                 try: field_map = field_data['map']
-                except KeyError: raise ValueError(''.join(('<', field, '> object has no child <map>.')))
+                except KeyError:
+                    raise ValueError(''.join(('<', field, '> object has no child <map>.')))
             maplist.append(self.tokenMap(field_maptype, field_map))
         self.maps = mappedFields._make(maplist)
-
-        # to access the maps use:
-        #    mqtt_token = maps.*field*.m2i(internal_token)
-        #    example: mqtt_token = maps.gateway.m2i(internal_token)
 
     def sender(self):
         ''' docstring '''
