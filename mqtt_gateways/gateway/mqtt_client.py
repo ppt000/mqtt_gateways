@@ -57,7 +57,7 @@ def _on_connect(client, userdata, flags, return_code):
     _logger.debug(''.join(('on_connect: ',
                            'Result code <', str(return_code), '>: ', _MQTT_RC[return_code],
                           '. Session Present flag :', str(session_present), '.')))
-    if return_code != 0: # unsuccesfull
+    if return_code != 0: # failed
         _logger.info(''.join(('Connection failed with result code <',
                               str(return_code), '>: ', _MQTT_RC[return_code], '.')))
         # FEATURE: deal with situations that are not recoverable
@@ -74,7 +74,7 @@ def _on_connect(client, userdata, flags, return_code):
         elif result != mqtt.MQTT_ERR_SUCCESS:
             _logger.info(''.join(('Unrecognised result <', str(result), '> during subscription.')))
         else:
-            _logger.debug(''.join(('Subscriptions succesfull to topics <', str(client.topics),
+            _logger.debug(''.join(('Subscriptions successful to topics <', str(client.topics),
                                    '> with message id <', str(mid), '>.')))
     return
 
