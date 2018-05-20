@@ -1,6 +1,7 @@
-.. warning: As of 20 May 2018, this project has been split into the core framework ``mqttgateway``,
-  and the interfaces available, for example ``musiccast2mqtt``.
-  Head to those repos for the updates projects.
+.. warning::
+    As of 20 May 2018, this project has been split into the core framework ``mqttgateway``,
+    and the interfaces available, for example ``musiccast2mqtt``.
+    Head to those repos for the updates projects.
 
 The documentation in ``docs/source`` is formatted to be read in `ReadTheDocs <http://mqtt-gateways.readthedocs.io/>`_.
 Head there to browse it.
