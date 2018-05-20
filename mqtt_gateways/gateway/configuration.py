@@ -63,18 +63,17 @@ topics: home/dummyfunction/#, home/+/dummy/#
 #   See below for other instructions on file names and paths.
 logfilename: .
 
-# Turn debug 'on' if logging of all debug messages is required, otherwise its INFO
+# Turn debug 'on' if logging of all DEBUG level messages is required, otherwise its INFO
 debug: off
 
-# Added 2018-03-29
-# Console level: use NONE for no console output, otherwise the level wanted
-# Logs will be directed to stdout.
+# Console level: use NONE for no console output, otherwise the level wanted.
+#   Logs will be directed to stdout.  Levels are the ones from the logging module:
+#   CRITICAL, ERROR, WARN or WARNING, INFO and DEBUG.
 consolelevel: NONE
 
 # Email credentials; leave empty if not required.
 #   All CRITICAL level logs are sent to this email, if defined.
-#   For now there is no authentication, it is only here for 'internal'
-#   emails.
+#   For now there is no authentication, it is only here for 'internal' emails.
 emailhost:
 # for example: emailhost: 127.0.0.1
 emailport:

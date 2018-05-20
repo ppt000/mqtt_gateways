@@ -4,24 +4,49 @@ Installation
 Copying the repository
 **********************
 
-The easiest way to install this project is by copying the whole
-`github repository <https://github.com/ppt000/mqtt_gateways>`_
-into a directory named ``mqtt_gateways`` on your machine.  Clone it with ``git``
-or download the zip archive and extract all the files.
+To install this application just copy the
+`github repository <https://github.com/ppt000/mqtt_gateways>`_ on your machine.
+More precisely:
+
+If you use a command-line only linux system:
+
+- change directory to the location you want this application to be.  It could go under ``/usr/local/bin/`` for example,
+  or your home directory ``/home/your_username/``.  Let's call this directory ``app_dir/`` for future reference.
+
+- download the zipped file from GitHub, unzip it and delete it:
+
+.. code-block:: none
+
+    wget http://github.com/ppt000/mqtt_gateways/archive/master.zip
+    unzip master.zip
+    rm master.zip
+
+If you use a window system:
+
+- point your browser to `GitHub <https://github.com/ppt000/mqtt_gateways/tree/master>`_,
+  making sure that you are on the ``master`` branch of the ``mqtt_gateways`` repository.
+
+- use the **Download Zip** button or menu from that page to download the zipped file.
+
+- Unzip the file into the location you want this application to be, let's call it ``app_dir``.
+
+There is now under ``app_dir/`` a directory called ``mqtt_gateways_master`` or something similar.
+Inside it, there are all the files needed for the application.
+
 The only non-standard dependency is the `paho.mqtt <https://pypi.python.org/pypi/paho-mqtt>`_ library.
-Please install it if you do not have it already in your environment.
+Please install it if you do not have it already in your environment, using ``pip`` for example.
 
 The directory structure of the relevant files should look like this:
 
 .. image:: directory_tree.png
-   :scale: 60%
+   :scale: 80%
    :align: center
 
 The core engine of the project is the ``gateway`` sub-package with
 the main module ``start_gateway.py``
 that initialises everything and launches the main loop.
 The ``mqtt_map.py`` module defines a class for internal messages
-and a *map* class for translation methods between internal
+and a :class:`MsgMap` class for translation methods between internal
 and MQTT messages.
 These methods rely on mapping data to be provided by the developer
 to be discussed later.
@@ -32,7 +57,7 @@ The ``dummy`` sub-package is the first interface.
 It doesn't do anything except helping to check the set-up
 and understand the inner workings of the application.
 
-The 'data' directory contains all the data files for all the interfaces.
+The ``data`` directory contains all the data files for all the interfaces.
 These are usually the configuration files and the mapping data files.
 
 Configuration
@@ -40,7 +65,7 @@ Configuration
 
 The configuration file has a standard ``INI`` syntax,
 with sections identified by ``[SECTION]`` and options within sections identified by ``option=value``.
-The gateway being developped can use the ``[INTERFACE]`` section
+The interface of the gateway can use the ``[INTERFACE]`` section
 where any number of options can be inserted and will be made available to the application
 through a dictionary initialised with all the ``option:value`` pairs.
 
@@ -62,6 +87,14 @@ The default port is 1883, if it is different it can also be indicated
 in the configuration file.
 
 Authentication is not available at this stage.
+
+.. note::
+  The application is supposed to run in an MQTT enabled environment as the whole idea is
+  to communicate with other devices via MQTT. Therefore there should be a MQTT broker.
+  Ideally the MQTT broker is in the local network, even if a broker *in the cloud* is
+  acceptable.  If you are just testing this application and do not have an MQTT broker,
+  you can use a public one, but the idea is that, down the line, you set up your own
+  *local* broker.
 
 For more details about the ``.conf`` file, defaults and command line arguments,
 go to `Configuration <configuration.html>`_.
@@ -140,7 +173,7 @@ subscribe to.
 .. the following section is removed for now
 	Further Considerations
 	**********************
-	
+
 	Other ways of installing this framework, as a library for example,
 	might be implemented later if necessary.
 	The ``setup.py`` file
