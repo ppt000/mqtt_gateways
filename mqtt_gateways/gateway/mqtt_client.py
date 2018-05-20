@@ -27,7 +27,7 @@ _MQTT_RC = {
     }
 
 _THROTTLELAG = 600  # lag in seconds to throttle the error logs.
-_RACELAG = 0.1 # lag in seconds to wait before testing the connection state
+_RACELAG = 0.5 # lag in seconds to wait before testing the connection state
 
 # pylint: disable=too-few-public-methods
 
@@ -140,8 +140,10 @@ class mgClient(mqtt.Client):
         self.userdata = userdata
         self.connected = False
         #self.userdata['connected'] = False # connection state, to be set in the callbacks
-        self.connect_time = 0 # time of connection request
-        self.lag_test = self.lag_end # this is a 'function attribute', like a method.
+
+        # Connection oarameters reset below are already done in method "connect()"
+        #self.connect_time = 0 # time of connection request
+        #self.lag_test = self.lag_end # this is a 'function attribute', like a method.
 
         super(mgClient, self).__init__(client_id=client_id, clean_session=True,
                                        userdata=userdata, protocol=mqtt.MQTTv311, transport='tcp')
