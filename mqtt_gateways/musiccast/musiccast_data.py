@@ -1,20 +1,30 @@
 '''Data for the MusicCast system.'''
 
 TRANSFORM_ARG = {
-    'power':    lambda self, value: 'on' if value == 'on' else 'standby',
-    'mute':     lambda self, value: 'true' if value == 'on' else 'false',
-    'volume':   lambda self, value:
-                    str(int(int(value) * self.volume_range / 100)),
-    'input':    lambda self, value: value,
+    'power':    (lambda self, value: 'on' if value else 'standby',
+                 lambda self, value: value == 'on'),
+    'mute':     (lambda self, value: 'true' if value else 'false',
+                 lambda self, value: value == 'on'),
+    'volume':   (lambda self, value: str(int(int(value) * self._volume_range / 100)),
+                 lambda self, value: int(int(value) * 100 / self._volume_range)),
+    'input':    (lambda self, value: value,
+                 lambda self, value: value),
         # Assume same names between internal and MusicCast, for now
-    'source':   lambda self, value: value,
+    'source':   (lambda self, value: value,
+                 lambda self, value: value),
         # Assume same names between internal and MusicCast, for now
-    'action':   lambda self, value: value,
+    'action':   (lambda self, value: value,
+                 lambda self, value: value),
         # Assume same names between internal and MusicCast, for now
-    'preset':   lambda self, value: str(value)
+    'preset':   (lambda self, value: value,
+                 lambda self, value: value),
         # preset number, could be an int?
     }
-''' Transforms arguments from internal keyword to MusicCast keyword.
+'''
+Transforms arguments from internal keyword to MusicCast keyword and back.
+
+The value for each key is a pair of lambdas; the first one transforms its arguments
+from internal representation to Musiccast, and the second one does the reverse.
 The lambdas have to be called by a Zone object.
 '''
 
@@ -22,13 +32,12 @@ ACTIONS = {
     'POWER_OFF':        lambda self: self.set_power(False),
     'POWER_ON':         lambda self: self.set_power(True),
     'SET_VOLUME':       lambda self: self.set_volume(),
-    'VOLUME_UP':        lambda self: self.set_volume(True),
-    'VOLUME_DOWN':      lambda self: self.set_volume(False),
+    'VOLUME_UP':        lambda self: self.set_volume(up=True),
+    'VOLUME_DOWN':      lambda self: self.set_volume(up=False),
     # TODO: implement VOLUME_UP and DOWN with step...
     'MUTE_ON':          lambda self: self.set_mute(True),
     'MUTE_OFF':         lambda self: self.set_mute(False),
-    'MUTE_TOGGLE':      lambda self:
-        self.set_mute(not self.status['mute'] == 'true'),
+    'MUTE_TOGGLE':      lambda self: self.set_mute(not self._mute),
     'GET_INPUTS':       lambda self: self.send_reply(),
     # TODO: send message reply with list of available inputs
     'SET_INPUT':        lambda self: self.set_input(),
@@ -67,27 +76,19 @@ EVENTS = { # lambdas to be called by a Device object; value is always a string
     'stereo_pair_info_updated': None # not implemented
 },
 'main': {
-    'power': lambda self, value:
-        self.find_mczone('main').update_status_item('power', value),
-    'input': lambda self, value:
-        self.find_mczone('main').update_status_item('input', value),
-    'volume': lambda self, value:
-        self.find_mczone('main').update_status_item('volume', value),
-    'mute': lambda self, value:
-        self.find_mczone('main').update_status_item('mute', value),
+    'power': lambda self, value: self.find_mczone('main').update_power(value),
+    'input': lambda self, value: self.find_mczone('main').update_input(value),
+    'volume': lambda self, value: self.find_mczone('main').update_volume(value),
+    'mute': lambda self, value: self.find_mczone('main').update_mute(value),
     'status_updated': lambda self, value:
         self.find_mczone('main').refresh_status() if value else None,
     'signal_info_updated': None # not implemented; use 'getSignalInfo'
 },
 'zone2': {
-    'power': lambda self, value:
-        self.find_mczone('zone2').update_status_item('power', value),
-    'input': lambda self, value:
-        self.find_mczone('zone2').update_status_item('input', value),
-    'volume': lambda self, value:
-        self.find_mczone('zone2').update_status_item('volume', value),
-    'mute': lambda self, value:
-        self.find_mczone('zone2').update_status_item('mute', value),
+    'power': lambda self, value: self.find_mczone('zone2').update_power(value),
+    'input': lambda self, value: self.find_mczone('zone2').update_input(value),
+    'volume': lambda self, value: self.find_mczone('zone2').update_volume(value),
+    'mute': lambda self, value: self.find_mczone('zone2').update_mute(value),
     'status_updated': lambda self, value:
         self.find_mczone('zone2').refresh_status() if value else None,
     'signal_info_updated': None, # not implemented; use 'getSignalInfo'
@@ -150,16 +151,6 @@ EVENTS = { # lambdas to be called by a Device object; value is always a string
 Dictionary to decode incoming events.
 '''
 
-_MCGROUPS = {'cd': ['cd'],
-             'tuner': ['tuner'],
-             'netusb': ['usb', 'bluetooth', 'server', 'net_radio',
-                        'spotify', 'airplay']
-             }
-'''
-Dictionary of MusicCast groups keys pointing to the list of inputs in them.
-TODO: this list needs to be updated with all the right sources.
-'''
-
 _RESPONSE_CODES = {
 0: 'Successful request',
 1: 'Initialising',
@@ -210,19 +201,5 @@ _SOUNDPROGRAMS = ('munich_a', 'munich_b', 'munich', 'frankfurt', 'stuttgart',
                   'stereo', 'surr_decoder', 'my_surround', 'target', 'straight',
                   'off')
 
-def print1():
-    ''' docstring '''
-    print 'ZONES:'
-    for zon in _ZONES:
-        print '\t', zon
-    print
-    print 'INPUTS:'
-    for inp in _INPUTS:
-        print '\t', inp
-    print
-    print 'SOUND PROGRAMS:'
-    for snd in _SOUNDPROGRAMS:
-        print '\t', snd
-
 if __name__ == '__main__':
-    print1()
+    pass
