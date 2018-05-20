@@ -3,7 +3,9 @@ Function to calculate sunrise and sunset times out of date and latitude.
 
 Based on the paper:
 Predicting Sunrise and Sunset Times
-Donald A. Teets (donald.teets@sdsmt.edu), South Dakota School of Mines and Technology, Rapid City, SD 57701
+Donald A. Teets (donald.teets@sdsmt.edu),
+South Dakota School of Mines and Technology,
+Rapid City, SD 57701
 '''
 
 import math
@@ -29,12 +31,12 @@ Factor2 = 1440.0/(2.0*math.pi)
 
 class Sunlight(object):
     ''' Class to calculate sunrise and sunset times.
-    
+
     As a quite a few calculations rely on parameters that will not change much
     like latitude, it is better to define a class with a location data (latitude
     and time-zone) and then call a method to compute the sunset and sunrise
     for that location on a given date.
-    
+
     Args:
         latitude (float): latitude of the observer in degrees.
         zone (string): time zone identifier as defined in https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
@@ -46,15 +48,15 @@ class Sunlight(object):
         self.cosL = math.cos(lat_r)
         if zone is None: zone = 'Etc/UTC'
         self.tzone = pytz.timezone(zone)
-        anyday = datetime.datetime(2010,6,1)
+        anyday = datetime.datetime(2010, 6, 1)
         self.tzone_offset = self.tzone.utcoffset(anyday)-self.tzone.dst(anyday)
 
     def _calc(self, d):
         ''' Performs the *raw* calculation, no date library involved
-        
+
         Args:
             d (int): day number within year (e.g. 2Jan is 2, 1Feb is 32)
-        
+
         Returns:
             pair of int: the sunrise and sunset time in minutes after midnight
         '''
@@ -68,18 +70,18 @@ class Sunlight(object):
 
     def day(self, date=None):
         ''' Calculate the sunrise and sunset times in a given day
-        
+
         Args:
             date (datetime.date): calculate the sunset and sunrise for this date
-        
+
         Returns:
             datetime.datetime: sunrise and sunset date and time, adjusted for time zone
         '''
         if date is None: date = datetime.date.today()
         # test if date is a date object?
         sunrise, sunset = self._calc(date.timetuple().tm_yday) # sunrise and sunset are minutes (int)
-        sunrise_delta = datetime.timedelta(minutes = sunrise) - self.tzone_offset
-        sunset_delta = datetime.timedelta(minutes = sunset) - self.tzone_offset
+        sunrise_delta = datetime.timedelta(minutes=sunrise) - self.tzone_offset
+        sunset_delta = datetime.timedelta(minutes=sunset) - self.tzone_offset
         sunrise_date = pytz.utc.localize(datetime.datetime.combine(date, datetime.time(0, 0, 0)) + sunrise_delta)
         sunset_date = pytz.utc.localize(datetime.datetime.combine(date, datetime.time(0, 0, 0)) + sunset_delta)
         return sunrise_date.astimezone(self.tzone), sunset_date.astimezone(self.tzone)
@@ -97,5 +99,5 @@ if __name__ == '__main__':
     obj = Sunlight(LondonLAT, LondonTZ)
     srise, sset = obj.day()
     print 'sunrise and sunset today: ', srise.ctime(), sset.ctime()
-    srise, sset = obj.day(datetime.date(2018,6,1))
+    srise, sset = obj.day(datetime.date(2018, 6, 1))
     print 'another date: ', srise.ctime(), sset.ctime()

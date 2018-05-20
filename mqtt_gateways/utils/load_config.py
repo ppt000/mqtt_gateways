@@ -32,7 +32,7 @@ def loadconfig(cfg_dflt_string, cfg_filepath):
     The exception to the above process in the [INTERFACE] section.  The options
     of this section will be loaded 'as is' in the Config object.  This section can be
     used to define ad-hoc options that are not in the default configuration.
-    
+
     Finally, the function updates the option 'location' in the
     section [CONFIG] with the full path of the configuration file used, just in
     case it is needed later.  However it only updates it if it was present in

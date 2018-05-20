@@ -19,7 +19,7 @@ Usage:
 .. code-block:: none
 
     try:
-        some statements that might raise your own exception derived from this one
+        some statements that might raise your own exception derived from ThrottledException
     except YourExceptionError as err:
         if err.trigger:
             log(err.report)

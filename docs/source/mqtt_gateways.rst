@@ -18,3 +18,4 @@ Subpackages
     mqtt_gateways.gateway
     mqtt_gateways.utils
     mqtt_gateways.cbus
+    mqtt_gateways.musiccast

@@ -1,96 +1,132 @@
 '''Interface for MusicCast.'''
 
-from mqtt_gateways.gateway.mqtt_map import internalMsg
-from mqtt_gateways.utils.app_helper import appHelper
-from mqtt_gateways.musiccast.musiccast_system import System, Zone
-from mqtt_gateways.musiccast.musiccast_exceptions import *
+import json
+
+import mqtt_gateways.musiccast.musiccast_exceptions as mcx
+from mqtt_gateways.musiccast.musiccast_system import System
 from mqtt_gateways.musiccast.musiccast_data import ACTIONS
 
+import mqtt_gateways.utils.app_properties as app
+_logger = app.Properties.get_logger(__name__)
 
 class musiccastInterface(object):
     '''The Interface.
-    
-    Resolves the JSON file path and calls the System class in musiccast_system.
-    Creates the locations dictionary.
+
+    Resolves the system definition file path and calls the System class in musiccast_system.
+    Creates the locations and devices dictionaries.
+
+    Args:
+        params (dictionary): includes all options from the dedicated section
+            of the configuration file.  This class only requires the **sysdefpath** option
+            to be defined. It is the location of the JSON file describing the system.  If
+            that option is not found then the local directory is used instead.
+        msglist_in (list of :class:`internalMsg`): the list of incoming messages.
+        msglist_out (list of :class:`internalMsg`): the list of outgoing messages.
     '''
 
-    def __init__(self, params, msgls, path):
-        self._logger = appHelper.getLogger(__name__)
+    def __init__(self, params, msglist_in, msglist_out):
 
         # Keep the message lists locally
-        self._msgl_in = msgls[0]
-        self._msgl_out = msgls[1]
+        self._msgl_in = msglist_in
+        self._msgl_out = msglist_out
 
-        try: jsonpath = params['jsonpath']
+        # compute the system definition file path
+        try: jsonpath = params['sysdefpath']
         except KeyError:
-            self._logger.info('The "jsonpath" option is not defined in the configuration file. Using ".".')
+            _logger.info('The "sysdefpath" option is not defined in the configuration file.'\
+                         'Using ".".')
             jsonpath = '.'
-        jsonfilepath = appHelper.getPath('.json', jsonpath)
+        jsonfilepath = app.Properties.get_path('.json', jsonpath)
+
+        # load the system definition data; errors are fatal.
+        try:
+            with open(jsonfilepath, 'r') as json_file:
+                json_data = json.load(json_file)
+        except (IOError, OSError):
+            _logger.critical(''.join(('Can''t open ', jsonfilepath, '. Abort.')))
+            raise
+        except ValueError:
+            _logger.critical(''.join(('Can''t JSON-parse ', jsonfilepath, '. Abort.')))
+            raise
 
         # instantiate the system structure
-        self._system = System(jsonfilepath)
-        # attach the outgoing message list to the static member msgl_out of the Zone class
-        Zone.msgl_out = self._msgl_out
-        # create the location to zone dictionary; each key is a location, the value is the Zone object
-        self._locations = {zone.data.location: zone for dev in self._system.devices for zone in dev.zones if zone.data.location}
-        # TODO: check locations in the map?
+        self._system = System(json_data, self._msgl_out)
+
+        # create the location to zone dictionary: key is a location, value is a Zone object
+        self._locations = {zone.location: zone for dev in self._system.devices
+                                                for zone in dev.zones if zone.location}
+
+        # create the device id to device dictionary: key is an id, value is a Device object
+        self._devices = {dev.id: dev for dev in self._system.devices}
 
     def loop(self):
         ''' The method called periodically by the main loop.
+
+        The policy to send back status messages depends on the addressing used
+        by the incoming MQTT message: if it is addressed specifically to this
+        interface or to a specific MusicCast device, then a reply will always be sent
+        back (case called *assertive*); if it is not, a reply is sent only if a command
+        is executed, otherwise it stays silent as the message is probably intended for
+        somebody else.
         '''
 
-        # process the incoming messages list
-        while True:
-            try: msg = self._msgl_in.pop(0) # read messages on a FIFO basis
-            except IndexError: break # no more messages
-            self._logger.debug(''.join(('Processing message: ', msg.str())))
-            # determine is the message is 'assertive'
-            if msg.gateway == 'musiccast': assertive = True
+        while True: # process the incoming messages list
+            msg = self._msgl_in.pull() # read messages on a FIFO basis
+            if msg is None: break # no more messages
+
+            _logger.debug(''.join(('Processing message: ', msg.str())))
+
+            if not msg.iscmd: continue # ignore status messages
+
+            # determine if the message is 'assertive'
+            if msg.gateway == 'musiccast': # TODO: there are other cases to deal with
+                assertive = True
+
+            # is there a device in the topic?
+            if msg.device:
+                if msg.device in self._devices:
+                    assertive = True
+                    # TODO: select the 'default' zone for this device
+                pass
+
             # get the zone for this location
             try: zone = self._locations[msg.location]
             except KeyError: # the location is not found
                 errtxt = ''.join(('Location ', msg.location, ' not found.'))
-                self._logger.info(errtxt)
-                if assertive: self._msgl_out.append(msg.reply('Error', errtxt))
+                _logger.info(errtxt)
+                if assertive: self._msgl_out.push(msg.reply('Error', errtxt))
                 continue # ignore message and go onto next
 
-            # discard immediately if no device linked to that location can be operated by musiccast
-            if not zone.device.musiccast and not zone.device.mc_feed:
-                if assertive:
-                    self._msgl_out.append(msg.reply('Not Applicable', 'No MusicCast device involved in this command.'))
-                continue
+            # give access to the message attributes by loading them into the system instance
+            self._system.put_msg(msg)
 
+            # TODO: implement self._system.execute_action
+            # retrieve the function to execute for this action
             try: func = ACTIONS[msg.action]
             except KeyError: # the action is not found
                 errtxt = ''.join(('Action ', msg.action, ' not found.'))
-                self._logger.info(errtxt)
-                if assertive: self._msgl_out.append(msg.reply('Error', errtxt))
+                _logger.info(errtxt)
+                if assertive: self._msgl_out.push(msg.reply('Error', errtxt))
                 continue # ignore message and go onto next
 
-            zone.load_msg(msg)
-
+            # execute the function in the zone
             try: func(zone)
-            except mcLogicError as err:
-                self._logger.info(''.join(('Logic Error: ', err.message)))
+            except mcx.AnyError as err:
+                _logger.info(''.join(('Can\'t execute command. Error:\n\t', repr(err))))
                 continue
-            except mcConnectError as err:
-                self._logger.info(''.join(('Connection Error: ', err.message)))
-                continue
-            except mcHTTPError as err:
-                self._logger.info(''.join(('HTTP Error: ', err.message)))
-                continue
-            except mcDeviceError as err:
-                self._logger.info(''.join(('Device Error: ', err.message)))
-                continue
-            except mcError as err:
-                self._logger.info(''.join(('Error: ', err.message)))
-                continue
-            try: self._logger.debug(''.join(('State of zone ', zone.str_zone(), ' is now: ', zone.str_state())))
-            except AttributeError as err: self._logger.debug(''.join(('Cannot display message.\n', repr(err))))
-            try: self._logger.debug(''.join(('Source device is: ', zone.zonesource.device.data.id)))
-            except AttributeError as err: self._logger.debug(''.join(('Cannot display message.\n', repr(err))))
-            try: self._logger.debug(''.join(('State of zone ', zone.zonesource.str_zone(), ' is now: ', zone.zonesource.str_state())))
-            except AttributeError as err: self._logger.debug(''.join(('Cannot display message.\n', repr(err))))
+
+            # stack reply on outgoing message list
+            #self._msgl_out.push(self.reply())
+
+            #_logger.debug(zone.dump_zone())
+
+        # check if there are any events to process
+        try: self._system.listen_musiccast()
+        except mcx.AnyError as err:
+            _logger.info(''.join(('Can\'t parse event. Error:\n\t', repr(err))))
+
+        # refresh the system
+        self._system.refresh()
 
         # example code to write in the outgoing messages list
         #=======================================================================
@@ -99,25 +135,11 @@ class musiccastInterface(object):
         #                   gateway='dummy',
         #                   location='Office',
         #                   action='LIGHT_ON')
-        # self._msgl_out.append(msg)
-        # self._logger.debug(''.join(('Message <', msg.str(), '> queued to send.')))
+        # self._msgl_out.push(msg)
+        # _logger.debug(''.join(('Message <', msg.str(), '> queued to send.')))
         #=======================================================================
 
 # if device['protocol'] == 'YNCA': conn.request('GET','@SYS:PWR=?\r\n')
 
 if __name__ == '__main__':
-    #===========================================================================
-    # mci = musiccastInterface(params, msgls, path)
-    # for dev in mci._system.devices:
-    #     print dev.data.id
-    #     if dev.musiccast:
-    #         for zone in dev.zones:
-    #             print '\tZone ','-'.join((zone.data.id, str(zone.state['power']), zone.state['input'], str(zone.state['volume']), str(zone.state['mute'])))
-    # imsg = internalMsg()
-    # imsg.location = 'cinemaroom'
-    # imsg.action = 'SELECT_SOURCE'
-    # imsg.arguments = {'source': 'spotify', 'volume': '20', 'power': 'on', 'tune': 'off'}
-    # msgls[0].append(imsg)
-    # mci.loop()
-    #===========================================================================
     pass

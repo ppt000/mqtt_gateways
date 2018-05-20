@@ -1,0 +1,47 @@
+{
+	"function": {
+		"map": {
+			"audiovideo": "AudioVideo",
+			"lighting": "Lighting"
+		},
+		"maptype": "strict"
+	},
+	"sender": {
+		"maptype": "none"
+	},
+	"topics": [
+		"home/audiovideo/+/+/+/+/C",
+		"home/+/musiccast2mqtt/+/+/+/C"
+	],
+	"action": {
+		"map": {
+			"power_on": "power_on",
+			"power_off": "power_off"
+		},
+		"maptype": "strict"
+	},
+	"location": {
+		"map": {
+			"office": "office"
+		},
+		"maptype": "strict"
+	},
+	"device": {
+		"map": {
+		},
+		"maptype": "strict"
+	},
+	"argvalue": {
+		"maptype": "none"
+	},
+	"root": "home",
+	"gateway": {
+		"map": {
+			"musiccast2mqtt": "musiccast2mqtt"
+		},
+		"maptype": "strict"
+	},
+	"argkey": {
+		"maptype": "none"
+	}
+}

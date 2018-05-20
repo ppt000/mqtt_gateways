@@ -2,12 +2,15 @@
 
 import os.path
 
-# import the function that initiates and starts the gateway
-from mqtt_gateways.gateway.start_gateway import startgateway
+import mqtt_gateways.utils.app_properties as app
+app.Properties.init(os.path.realpath(__file__))
 
-# import the class representing the interface *** add your import here ***
-from mqtt_gateways.cbus.cbus_interface import cbusInterface
+# import the module that initiates and starts the gateway
+import mqtt_gateways.gateway.start_gateway as start_g
+
+# import the module representing the interface *** add your import here ***
+import mqtt_gateways.cbus.cbus_interface as cbus_i
 
 if __name__ == '__main__':
     # launch the gateway *** add your class here ***
-    startgateway(cbusInterface, os.path.realpath(__file__))
+    start_g.startgateway(cbus_i.cbusInterface)

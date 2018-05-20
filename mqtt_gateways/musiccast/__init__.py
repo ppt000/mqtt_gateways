@@ -1,1 +1,1 @@
-'''Gateway to Yamaha MusicCast products.'''
+'''Gateway to Yamaha MusicCast devices.'''

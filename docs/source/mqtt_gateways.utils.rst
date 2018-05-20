@@ -12,18 +12,10 @@ Module contents
 Submodules
 ----------
 
-mqtt\_gateways\.utils\.exception\_throttled module
+mqtt\_gateways\.utils\.throttled\_exception module
 --------------------------------------------------
 
-.. automodule:: mqtt_gateways.utils.exception_throttled
-    :members:
-    :undoc-members:
-    :show-inheritance:
-
-mqtt\_gateways\.utils\.generate\_filepath module
-------------------------------------------------
-
-.. automodule:: mqtt_gateways.utils.generate_filepath
+.. automodule:: mqtt_gateways.utils.throttled_exception
     :members:
     :undoc-members:
     :show-inheritance:
